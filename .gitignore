@@ -1,0 +1,22 @@
+*.iml
+.gradle
+/local.properties
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Android Studio
+.idea/*
+!.idea/codeStyles
+!.idea/runConfigurations.xml
+*.hprof
+
+# Gradle wrapper jar is fetched on first sync / via `gradle wrapper`
+gradle/wrapper/gradle-wrapper.jar
+
+# Keystore files
+*.jks
+*.keystore

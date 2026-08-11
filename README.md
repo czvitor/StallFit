@@ -7,8 +7,9 @@
 *Construído para quem leva performance a sério — não para quem conta passos.*
 
 [![License](https://img.shields.io/badge/license-Proprietary-red.svg)](LICENSE)
-[![Status](https://img.shields.io/badge/status-Em%20desenvolvimento-yellow.svg)]()
-[![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-blue.svg)]()
+[![Status](https://img.shields.io/badge/status-MVP%20funcional-brightgreen.svg)]()
+[![Platform](https://img.shields.io/badge/platform-Android%20nativo-blue.svg)]()
+[![Stack](https://img.shields.io/badge/stack-Kotlin%20%2B%20Jetpack%20Compose-7F52FF.svg)]()
 
 </div>
 
@@ -59,16 +60,46 @@ O StällFit foi desenhado com um princípio central: **velocidade de registro**.
 
 ---
 
+## Stack técnica
+
+O StällFit é um app **Android nativo**, sem framework híbrido e sem backend — todos os dados vivem no dispositivo do usuário.
+
+| Camada | Tecnologia |
+|---|---|
+| Linguagem | Kotlin |
+| UI | Jetpack Compose + Material 3 |
+| Persistência | Room (SQLite), 100% local |
+| Navegação | Navigation Compose |
+| Concorrência | Coroutines + Flow (`StateFlow`, `combine`, `flatMapLatest`) |
+| Injeção de dependência | Manual (`AppContainer` + `viewModelFactory`), sem Hilt/Dagger |
+| Build | Gradle Kotlin DSL com catálogo de versões (`libs.versions.toml`) e KSP |
+
+Ver [SETUP.md](SETUP.md) para instruções de build e execução.
+
+---
+
 ## Arquitetura
 
-O projeto separa explicitamente a lógica de negócios dos módulos de treino e nutrição, permitindo que cada domínio evolua de forma independente. A camada de apresentação é desacoplada dos modelos de dados, facilitando testes e manutenção à medida que o app cresce.
+O projeto separa explicitamente a camada de dados, a lógica de domínio e a apresentação, e organiza a UI por módulo de produto (treino, nutrição, dashboard, metas) em vez de por tipo de arquivo — cada tela carrega seu próprio `ViewModel` e `UiState`, mantendo os domínios de treino e nutrição independentes entre si e permitindo que cada um evolua sem afetar o outro.
 
 ```
-StällFit
-├── workout/       # Domínio de treino: sessões, exercícios, cargas, timer
-├── nutrition/     # Domínio de nutrição: alimentos, refeições, macros
-├── dashboard/     # Agregação e visualização de dados cruzados
-└── shared/        # Componentes, utilitários e modelos compartilhados
+app/src/main/java/com/vitorsousa/stallfit/
+├── MainActivity.kt        # ponto de entrada — instancia o tema e o NavHost
+├── StallFitApp.kt         # Application, dona do AppContainer (DI manual)
+├── core/util/              # utilitários compartilhados (datas, dias-época)
+├── data/
+│   ├── local/               # entities, DAOs, Converters e o StallFitDatabase (Room)
+│   └── repository/          # WorkoutRepository e NutritionRepository
+├── di/                      # AppContainer + AppViewModelProvider
+├── domain/model/            # modelos derivados, ex.: MacroTotals
+├── navigation/               # rotas (Destination) e o NavHost + bottom nav
+└── ui/
+    ├── theme/                # paleta dark-first, tipografia
+    ├── components/           # StatCard, CalorieRing, MacroProgressBar, SectionHeader, EmptyState
+    ├── dashboard/             # tela inicial — resumo cruzado treino + nutrição
+    ├── workout/               # lista de treinos, sessão ativa, timer de descanso
+    ├── nutrition/             # diário de refeições, adicionar alimento
+    └── goals/                 # metas de macros
 ```
 
 ---
