@@ -8,23 +8,23 @@ import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 
 private val StallFitDarkColorScheme = darkColorScheme(
-    primary = Volt,
-    onPrimary = BackgroundDark,
-    primaryContainer = VoltDim,
-    onPrimaryContainer = BackgroundDark,
-    secondary = ElectricBlue,
-    onSecondary = BackgroundDark,
-    tertiary = Amber,
-    onTertiary = BackgroundDark,
-    error = Coral,
-    onError = BackgroundDark,
-    background = BackgroundDark,
-    onBackground = OnBackgroundDark,
-    surface = SurfaceDark,
-    onSurface = OnBackgroundDark,
-    surfaceVariant = SurfaceVariantDark,
-    onSurfaceVariant = OnSurfaceMutedDark,
-    outline = OutlineDark
+    primary = VoltNeon,
+    onPrimary = ObsidianBackground,
+    primaryContainer = VoltNeonVariant,
+    onPrimaryContainer = ObsidianBackground,
+    secondary = StatusSuccess,
+    onSecondary = ObsidianBackground,
+    tertiary = StatusWater,
+    onTertiary = TextPrimary,
+    error = StatusWarning,
+    onError = TextPrimary,
+    background = ObsidianBackground,
+    onBackground = TextPrimary,
+    surface = DarkSlateCard,
+    onSurface = TextPrimary,
+    surfaceVariant = CharcoalInput,
+    onSurfaceVariant = TextSecondary,
+    outline = SteelBorder
 )
 
 /**

@@ -11,6 +11,8 @@ import androidx.room.RoomSQLiteQuery;
 import androidx.room.util.CursorUtil;
 import androidx.room.util.DBUtil;
 import androidx.sqlite.db.SupportSQLiteStatement;
+import com.vitorsousa.stallfit.data.local.Converters;
+import com.vitorsousa.stallfit.data.local.entity.Equipment;
 import com.vitorsousa.stallfit.data.local.entity.ExerciseEntity;
 import java.lang.Class;
 import java.lang.Exception;
@@ -36,13 +38,15 @@ public final class ExerciseDao_Impl implements ExerciseDao {
 
   private final EntityInsertionAdapter<ExerciseEntity> __insertionAdapterOfExerciseEntity;
 
+  private final Converters __converters = new Converters();
+
   public ExerciseDao_Impl(@NonNull final RoomDatabase __db) {
     this.__db = __db;
     this.__insertionAdapterOfExerciseEntity = new EntityInsertionAdapter<ExerciseEntity>(__db) {
       @Override
       @NonNull
       protected String createQuery() {
-        return "INSERT OR IGNORE INTO `exercises` (`id`,`name`,`muscleGroup`,`isCustom`) VALUES (nullif(?, 0),?,?,?)";
+        return "INSERT OR IGNORE INTO `exercises` (`id`,`name`,`muscleGroup`,`equipment`,`isCustom`) VALUES (nullif(?, 0),?,?,?,?)";
       }
 
       @Override
@@ -51,8 +55,10 @@ public final class ExerciseDao_Impl implements ExerciseDao {
         statement.bindLong(1, entity.getId());
         statement.bindString(2, entity.getName());
         statement.bindString(3, entity.getMuscleGroup());
-        final int _tmp = entity.isCustom() ? 1 : 0;
-        statement.bindLong(4, _tmp);
+        final String _tmp = __converters.fromEquipment(entity.getEquipment());
+        statement.bindString(4, _tmp);
+        final int _tmp_1 = entity.isCustom() ? 1 : 0;
+        statement.bindLong(5, _tmp_1);
       }
     };
   }
@@ -108,6 +114,7 @@ public final class ExerciseDao_Impl implements ExerciseDao {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
           final int _cursorIndexOfMuscleGroup = CursorUtil.getColumnIndexOrThrow(_cursor, "muscleGroup");
+          final int _cursorIndexOfEquipment = CursorUtil.getColumnIndexOrThrow(_cursor, "equipment");
           final int _cursorIndexOfIsCustom = CursorUtil.getColumnIndexOrThrow(_cursor, "isCustom");
           final List<ExerciseEntity> _result = new ArrayList<ExerciseEntity>(_cursor.getCount());
           while (_cursor.moveToNext()) {
@@ -118,11 +125,15 @@ public final class ExerciseDao_Impl implements ExerciseDao {
             _tmpName = _cursor.getString(_cursorIndexOfName);
             final String _tmpMuscleGroup;
             _tmpMuscleGroup = _cursor.getString(_cursorIndexOfMuscleGroup);
+            final Equipment _tmpEquipment;
+            final String _tmp;
+            _tmp = _cursor.getString(_cursorIndexOfEquipment);
+            _tmpEquipment = __converters.toEquipment(_tmp);
             final boolean _tmpIsCustom;
-            final int _tmp;
-            _tmp = _cursor.getInt(_cursorIndexOfIsCustom);
-            _tmpIsCustom = _tmp != 0;
-            _item = new ExerciseEntity(_tmpId,_tmpName,_tmpMuscleGroup,_tmpIsCustom);
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsCustom);
+            _tmpIsCustom = _tmp_1 != 0;
+            _item = new ExerciseEntity(_tmpId,_tmpName,_tmpMuscleGroup,_tmpEquipment,_tmpIsCustom);
             _result.add(_item);
           }
           return _result;
@@ -154,6 +165,7 @@ public final class ExerciseDao_Impl implements ExerciseDao {
           final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
           final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
           final int _cursorIndexOfMuscleGroup = CursorUtil.getColumnIndexOrThrow(_cursor, "muscleGroup");
+          final int _cursorIndexOfEquipment = CursorUtil.getColumnIndexOrThrow(_cursor, "equipment");
           final int _cursorIndexOfIsCustom = CursorUtil.getColumnIndexOrThrow(_cursor, "isCustom");
           final ExerciseEntity _result;
           if (_cursor.moveToFirst()) {
@@ -163,11 +175,15 @@ public final class ExerciseDao_Impl implements ExerciseDao {
             _tmpName = _cursor.getString(_cursorIndexOfName);
             final String _tmpMuscleGroup;
             _tmpMuscleGroup = _cursor.getString(_cursorIndexOfMuscleGroup);
+            final Equipment _tmpEquipment;
+            final String _tmp;
+            _tmp = _cursor.getString(_cursorIndexOfEquipment);
+            _tmpEquipment = __converters.toEquipment(_tmp);
             final boolean _tmpIsCustom;
-            final int _tmp;
-            _tmp = _cursor.getInt(_cursorIndexOfIsCustom);
-            _tmpIsCustom = _tmp != 0;
-            _result = new ExerciseEntity(_tmpId,_tmpName,_tmpMuscleGroup,_tmpIsCustom);
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsCustom);
+            _tmpIsCustom = _tmp_1 != 0;
+            _result = new ExerciseEntity(_tmpId,_tmpName,_tmpMuscleGroup,_tmpEquipment,_tmpIsCustom);
           } else {
             _result = null;
           }

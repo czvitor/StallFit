@@ -17,12 +17,16 @@ import com.vitorsousa.stallfit.data.local.dao.FoodDao;
 import com.vitorsousa.stallfit.data.local.dao.FoodDao_Impl;
 import com.vitorsousa.stallfit.data.local.dao.MacroGoalDao;
 import com.vitorsousa.stallfit.data.local.dao.MacroGoalDao_Impl;
-import com.vitorsousa.stallfit.data.local.dao.MealEntryDao;
-import com.vitorsousa.stallfit.data.local.dao.MealEntryDao_Impl;
+import com.vitorsousa.stallfit.data.local.dao.MealDao;
+import com.vitorsousa.stallfit.data.local.dao.MealDao_Impl;
 import com.vitorsousa.stallfit.data.local.dao.SetEntryDao;
 import com.vitorsousa.stallfit.data.local.dao.SetEntryDao_Impl;
+import com.vitorsousa.stallfit.data.local.dao.UserProfileDao;
+import com.vitorsousa.stallfit.data.local.dao.UserProfileDao_Impl;
 import com.vitorsousa.stallfit.data.local.dao.WorkoutSessionDao;
 import com.vitorsousa.stallfit.data.local.dao.WorkoutSessionDao_Impl;
+import com.vitorsousa.stallfit.data.local.dao.WorkoutTemplateDao;
+import com.vitorsousa.stallfit.data.local.dao.WorkoutTemplateDao_Impl;
 import java.lang.Class;
 import java.lang.Override;
 import java.lang.String;
@@ -47,28 +51,39 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
 
   private volatile FoodDao _foodDao;
 
-  private volatile MealEntryDao _mealEntryDao;
-
   private volatile MacroGoalDao _macroGoalDao;
+
+  private volatile UserProfileDao _userProfileDao;
+
+  private volatile WorkoutTemplateDao _workoutTemplateDao;
+
+  private volatile MealDao _mealDao;
 
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(1) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
-        db.execSQL("CREATE TABLE IF NOT EXISTS `exercises` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `muscleGroup` TEXT NOT NULL, `isCustom` INTEGER NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `workout_sessions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `startedAt` INTEGER NOT NULL, `finishedAt` INTEGER)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `exercises` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `muscleGroup` TEXT NOT NULL, `equipment` TEXT NOT NULL, `isCustom` INTEGER NOT NULL)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `workout_sessions` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `startedAt` INTEGER NOT NULL, `finishedAt` INTEGER, `templateId` INTEGER, FOREIGN KEY(`templateId`) REFERENCES `workout_templates`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_workout_sessions_templateId` ON `workout_sessions` (`templateId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `set_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `sessionId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `setNumber` INTEGER NOT NULL, `reps` INTEGER NOT NULL, `weightKg` REAL NOT NULL, `loggedAt` INTEGER NOT NULL, FOREIGN KEY(`sessionId`) REFERENCES `workout_sessions`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_set_entries_sessionId` ON `set_entries` (`sessionId`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_set_entries_exerciseId` ON `set_entries` (`exerciseId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `foods` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `caloriesPer100g` REAL NOT NULL, `proteinPer100g` REAL NOT NULL, `carbsPer100g` REAL NOT NULL, `fatPer100g` REAL NOT NULL, `isCustom` INTEGER NOT NULL)");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `meal_entries` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `foodId` INTEGER NOT NULL, `mealType` TEXT NOT NULL, `grams` REAL NOT NULL, `dateEpochDay` INTEGER NOT NULL, `loggedAt` INTEGER NOT NULL, FOREIGN KEY(`foodId`) REFERENCES `foods`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_meal_entries_foodId` ON `meal_entries` (`foodId`)");
-        db.execSQL("CREATE INDEX IF NOT EXISTS `index_meal_entries_dateEpochDay` ON `meal_entries` (`dateEpochDay`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `macro_goal` (`id` INTEGER NOT NULL, `calorieGoal` INTEGER NOT NULL, `proteinGoal` INTEGER NOT NULL, `carbGoal` INTEGER NOT NULL, `fatGoal` INTEGER NOT NULL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `user_profile` (`id` INTEGER NOT NULL, `ageYears` INTEGER NOT NULL, `weightKg` REAL NOT NULL, `heightCm` REAL NOT NULL, `sex` TEXT NOT NULL, `activityLevel` TEXT NOT NULL, `goal` TEXT NOT NULL, `armCm` REAL, `chestCm` REAL, `hipCm` REAL, `thighCm` REAL, `calfCm` REAL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `workout_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `template_exercises` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `templateId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `orderIndex` INTEGER NOT NULL, `sets` INTEGER NOT NULL, `repRangeMin` INTEGER NOT NULL, `repRangeMax` INTEGER NOT NULL, `restSeconds` INTEGER NOT NULL, `intensity` TEXT NOT NULL, FOREIGN KEY(`templateId`) REFERENCES `workout_templates`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_template_exercises_templateId` ON `template_exercises` (`templateId`)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_template_exercises_exerciseId` ON `template_exercises` (`exerciseId`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `meals` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `mealType` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `meal_food_items` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `mealId` INTEGER NOT NULL, `foodId` INTEGER NOT NULL, `grams` REAL NOT NULL, FOREIGN KEY(`mealId`) REFERENCES `meals`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`foodId`) REFERENCES `foods`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_meal_food_items_mealId` ON `meal_food_items` (`mealId`)");
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_meal_food_items_foodId` ON `meal_food_items` (`foodId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'db4c0c25ac048f21a726ce27548de1d3')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9fe47a264a5749aa0bd152a4c6a8d692')");
       }
 
       @Override
@@ -77,8 +92,12 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
         db.execSQL("DROP TABLE IF EXISTS `workout_sessions`");
         db.execSQL("DROP TABLE IF EXISTS `set_entries`");
         db.execSQL("DROP TABLE IF EXISTS `foods`");
-        db.execSQL("DROP TABLE IF EXISTS `meal_entries`");
         db.execSQL("DROP TABLE IF EXISTS `macro_goal`");
+        db.execSQL("DROP TABLE IF EXISTS `user_profile`");
+        db.execSQL("DROP TABLE IF EXISTS `workout_templates`");
+        db.execSQL("DROP TABLE IF EXISTS `template_exercises`");
+        db.execSQL("DROP TABLE IF EXISTS `meals`");
+        db.execSQL("DROP TABLE IF EXISTS `meal_food_items`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -123,10 +142,11 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
       @NonNull
       public RoomOpenHelper.ValidationResult onValidateSchema(
           @NonNull final SupportSQLiteDatabase db) {
-        final HashMap<String, TableInfo.Column> _columnsExercises = new HashMap<String, TableInfo.Column>(4);
+        final HashMap<String, TableInfo.Column> _columnsExercises = new HashMap<String, TableInfo.Column>(5);
         _columnsExercises.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsExercises.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsExercises.put("muscleGroup", new TableInfo.Column("muscleGroup", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsExercises.put("equipment", new TableInfo.Column("equipment", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsExercises.put("isCustom", new TableInfo.Column("isCustom", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysExercises = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesExercises = new HashSet<TableInfo.Index>(0);
@@ -137,13 +157,16 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
                   + " Expected:\n" + _infoExercises + "\n"
                   + " Found:\n" + _existingExercises);
         }
-        final HashMap<String, TableInfo.Column> _columnsWorkoutSessions = new HashMap<String, TableInfo.Column>(4);
+        final HashMap<String, TableInfo.Column> _columnsWorkoutSessions = new HashMap<String, TableInfo.Column>(5);
         _columnsWorkoutSessions.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsWorkoutSessions.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsWorkoutSessions.put("startedAt", new TableInfo.Column("startedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsWorkoutSessions.put("finishedAt", new TableInfo.Column("finishedAt", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        final HashSet<TableInfo.ForeignKey> _foreignKeysWorkoutSessions = new HashSet<TableInfo.ForeignKey>(0);
-        final HashSet<TableInfo.Index> _indicesWorkoutSessions = new HashSet<TableInfo.Index>(0);
+        _columnsWorkoutSessions.put("templateId", new TableInfo.Column("templateId", "INTEGER", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysWorkoutSessions = new HashSet<TableInfo.ForeignKey>(1);
+        _foreignKeysWorkoutSessions.add(new TableInfo.ForeignKey("workout_templates", "SET NULL", "NO ACTION", Arrays.asList("templateId"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesWorkoutSessions = new HashSet<TableInfo.Index>(1);
+        _indicesWorkoutSessions.add(new TableInfo.Index("index_workout_sessions_templateId", false, Arrays.asList("templateId"), Arrays.asList("ASC")));
         final TableInfo _infoWorkoutSessions = new TableInfo("workout_sessions", _columnsWorkoutSessions, _foreignKeysWorkoutSessions, _indicesWorkoutSessions);
         final TableInfo _existingWorkoutSessions = TableInfo.read(db, "workout_sessions");
         if (!_infoWorkoutSessions.equals(_existingWorkoutSessions)) {
@@ -189,25 +212,6 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
                   + " Expected:\n" + _infoFoods + "\n"
                   + " Found:\n" + _existingFoods);
         }
-        final HashMap<String, TableInfo.Column> _columnsMealEntries = new HashMap<String, TableInfo.Column>(6);
-        _columnsMealEntries.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMealEntries.put("foodId", new TableInfo.Column("foodId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMealEntries.put("mealType", new TableInfo.Column("mealType", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMealEntries.put("grams", new TableInfo.Column("grams", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMealEntries.put("dateEpochDay", new TableInfo.Column("dateEpochDay", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsMealEntries.put("loggedAt", new TableInfo.Column("loggedAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        final HashSet<TableInfo.ForeignKey> _foreignKeysMealEntries = new HashSet<TableInfo.ForeignKey>(1);
-        _foreignKeysMealEntries.add(new TableInfo.ForeignKey("foods", "CASCADE", "NO ACTION", Arrays.asList("foodId"), Arrays.asList("id")));
-        final HashSet<TableInfo.Index> _indicesMealEntries = new HashSet<TableInfo.Index>(2);
-        _indicesMealEntries.add(new TableInfo.Index("index_meal_entries_foodId", false, Arrays.asList("foodId"), Arrays.asList("ASC")));
-        _indicesMealEntries.add(new TableInfo.Index("index_meal_entries_dateEpochDay", false, Arrays.asList("dateEpochDay"), Arrays.asList("ASC")));
-        final TableInfo _infoMealEntries = new TableInfo("meal_entries", _columnsMealEntries, _foreignKeysMealEntries, _indicesMealEntries);
-        final TableInfo _existingMealEntries = TableInfo.read(db, "meal_entries");
-        if (!_infoMealEntries.equals(_existingMealEntries)) {
-          return new RoomOpenHelper.ValidationResult(false, "meal_entries(com.vitorsousa.stallfit.data.local.entity.MealEntryEntity).\n"
-                  + " Expected:\n" + _infoMealEntries + "\n"
-                  + " Found:\n" + _existingMealEntries);
-        }
         final HashMap<String, TableInfo.Column> _columnsMacroGoal = new HashMap<String, TableInfo.Column>(5);
         _columnsMacroGoal.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsMacroGoal.put("calorieGoal", new TableInfo.Column("calorieGoal", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
@@ -223,9 +227,99 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
                   + " Expected:\n" + _infoMacroGoal + "\n"
                   + " Found:\n" + _existingMacroGoal);
         }
+        final HashMap<String, TableInfo.Column> _columnsUserProfile = new HashMap<String, TableInfo.Column>(12);
+        _columnsUserProfile.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("ageYears", new TableInfo.Column("ageYears", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("weightKg", new TableInfo.Column("weightKg", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("heightCm", new TableInfo.Column("heightCm", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("sex", new TableInfo.Column("sex", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("activityLevel", new TableInfo.Column("activityLevel", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("goal", new TableInfo.Column("goal", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("armCm", new TableInfo.Column("armCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("chestCm", new TableInfo.Column("chestCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("hipCm", new TableInfo.Column("hipCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("thighCm", new TableInfo.Column("thighCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("calfCm", new TableInfo.Column("calfCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysUserProfile = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesUserProfile = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoUserProfile = new TableInfo("user_profile", _columnsUserProfile, _foreignKeysUserProfile, _indicesUserProfile);
+        final TableInfo _existingUserProfile = TableInfo.read(db, "user_profile");
+        if (!_infoUserProfile.equals(_existingUserProfile)) {
+          return new RoomOpenHelper.ValidationResult(false, "user_profile(com.vitorsousa.stallfit.data.local.entity.UserProfileEntity).\n"
+                  + " Expected:\n" + _infoUserProfile + "\n"
+                  + " Found:\n" + _existingUserProfile);
+        }
+        final HashMap<String, TableInfo.Column> _columnsWorkoutTemplates = new HashMap<String, TableInfo.Column>(3);
+        _columnsWorkoutTemplates.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsWorkoutTemplates.put("title", new TableInfo.Column("title", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsWorkoutTemplates.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysWorkoutTemplates = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesWorkoutTemplates = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoWorkoutTemplates = new TableInfo("workout_templates", _columnsWorkoutTemplates, _foreignKeysWorkoutTemplates, _indicesWorkoutTemplates);
+        final TableInfo _existingWorkoutTemplates = TableInfo.read(db, "workout_templates");
+        if (!_infoWorkoutTemplates.equals(_existingWorkoutTemplates)) {
+          return new RoomOpenHelper.ValidationResult(false, "workout_templates(com.vitorsousa.stallfit.data.local.entity.WorkoutTemplateEntity).\n"
+                  + " Expected:\n" + _infoWorkoutTemplates + "\n"
+                  + " Found:\n" + _existingWorkoutTemplates);
+        }
+        final HashMap<String, TableInfo.Column> _columnsTemplateExercises = new HashMap<String, TableInfo.Column>(9);
+        _columnsTemplateExercises.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("templateId", new TableInfo.Column("templateId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("exerciseId", new TableInfo.Column("exerciseId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("orderIndex", new TableInfo.Column("orderIndex", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("sets", new TableInfo.Column("sets", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("repRangeMin", new TableInfo.Column("repRangeMin", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("repRangeMax", new TableInfo.Column("repRangeMax", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("restSeconds", new TableInfo.Column("restSeconds", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsTemplateExercises.put("intensity", new TableInfo.Column("intensity", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysTemplateExercises = new HashSet<TableInfo.ForeignKey>(2);
+        _foreignKeysTemplateExercises.add(new TableInfo.ForeignKey("workout_templates", "CASCADE", "NO ACTION", Arrays.asList("templateId"), Arrays.asList("id")));
+        _foreignKeysTemplateExercises.add(new TableInfo.ForeignKey("exercises", "CASCADE", "NO ACTION", Arrays.asList("exerciseId"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesTemplateExercises = new HashSet<TableInfo.Index>(2);
+        _indicesTemplateExercises.add(new TableInfo.Index("index_template_exercises_templateId", false, Arrays.asList("templateId"), Arrays.asList("ASC")));
+        _indicesTemplateExercises.add(new TableInfo.Index("index_template_exercises_exerciseId", false, Arrays.asList("exerciseId"), Arrays.asList("ASC")));
+        final TableInfo _infoTemplateExercises = new TableInfo("template_exercises", _columnsTemplateExercises, _foreignKeysTemplateExercises, _indicesTemplateExercises);
+        final TableInfo _existingTemplateExercises = TableInfo.read(db, "template_exercises");
+        if (!_infoTemplateExercises.equals(_existingTemplateExercises)) {
+          return new RoomOpenHelper.ValidationResult(false, "template_exercises(com.vitorsousa.stallfit.data.local.entity.TemplateExerciseEntity).\n"
+                  + " Expected:\n" + _infoTemplateExercises + "\n"
+                  + " Found:\n" + _existingTemplateExercises);
+        }
+        final HashMap<String, TableInfo.Column> _columnsMeals = new HashMap<String, TableInfo.Column>(4);
+        _columnsMeals.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMeals.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMeals.put("mealType", new TableInfo.Column("mealType", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMeals.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysMeals = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesMeals = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoMeals = new TableInfo("meals", _columnsMeals, _foreignKeysMeals, _indicesMeals);
+        final TableInfo _existingMeals = TableInfo.read(db, "meals");
+        if (!_infoMeals.equals(_existingMeals)) {
+          return new RoomOpenHelper.ValidationResult(false, "meals(com.vitorsousa.stallfit.data.local.entity.MealEntity).\n"
+                  + " Expected:\n" + _infoMeals + "\n"
+                  + " Found:\n" + _existingMeals);
+        }
+        final HashMap<String, TableInfo.Column> _columnsMealFoodItems = new HashMap<String, TableInfo.Column>(4);
+        _columnsMealFoodItems.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMealFoodItems.put("mealId", new TableInfo.Column("mealId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMealFoodItems.put("foodId", new TableInfo.Column("foodId", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsMealFoodItems.put("grams", new TableInfo.Column("grams", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysMealFoodItems = new HashSet<TableInfo.ForeignKey>(2);
+        _foreignKeysMealFoodItems.add(new TableInfo.ForeignKey("meals", "CASCADE", "NO ACTION", Arrays.asList("mealId"), Arrays.asList("id")));
+        _foreignKeysMealFoodItems.add(new TableInfo.ForeignKey("foods", "CASCADE", "NO ACTION", Arrays.asList("foodId"), Arrays.asList("id")));
+        final HashSet<TableInfo.Index> _indicesMealFoodItems = new HashSet<TableInfo.Index>(2);
+        _indicesMealFoodItems.add(new TableInfo.Index("index_meal_food_items_mealId", false, Arrays.asList("mealId"), Arrays.asList("ASC")));
+        _indicesMealFoodItems.add(new TableInfo.Index("index_meal_food_items_foodId", false, Arrays.asList("foodId"), Arrays.asList("ASC")));
+        final TableInfo _infoMealFoodItems = new TableInfo("meal_food_items", _columnsMealFoodItems, _foreignKeysMealFoodItems, _indicesMealFoodItems);
+        final TableInfo _existingMealFoodItems = TableInfo.read(db, "meal_food_items");
+        if (!_infoMealFoodItems.equals(_existingMealFoodItems)) {
+          return new RoomOpenHelper.ValidationResult(false, "meal_food_items(com.vitorsousa.stallfit.data.local.entity.MealFoodItemEntity).\n"
+                  + " Expected:\n" + _infoMealFoodItems + "\n"
+                  + " Found:\n" + _existingMealFoodItems);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "db4c0c25ac048f21a726ce27548de1d3", "3822ad734ac3cf04e3eb8c0dd8ad4358");
+    }, "9fe47a264a5749aa0bd152a4c6a8d692", "d63b324fd9678dd4d16faac2c815f548");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -236,7 +330,7 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "exercises","workout_sessions","set_entries","foods","meal_entries","macro_goal");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "exercises","workout_sessions","set_entries","foods","macro_goal","user_profile","workout_templates","template_exercises","meals","meal_food_items");
   }
 
   @Override
@@ -256,8 +350,12 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
       _db.execSQL("DELETE FROM `workout_sessions`");
       _db.execSQL("DELETE FROM `set_entries`");
       _db.execSQL("DELETE FROM `foods`");
-      _db.execSQL("DELETE FROM `meal_entries`");
       _db.execSQL("DELETE FROM `macro_goal`");
+      _db.execSQL("DELETE FROM `user_profile`");
+      _db.execSQL("DELETE FROM `workout_templates`");
+      _db.execSQL("DELETE FROM `template_exercises`");
+      _db.execSQL("DELETE FROM `meals`");
+      _db.execSQL("DELETE FROM `meal_food_items`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
@@ -279,8 +377,10 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
     _typeConvertersMap.put(WorkoutSessionDao.class, WorkoutSessionDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(SetEntryDao.class, SetEntryDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(FoodDao.class, FoodDao_Impl.getRequiredConverters());
-    _typeConvertersMap.put(MealEntryDao.class, MealEntryDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(MacroGoalDao.class, MacroGoalDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(UserProfileDao.class, UserProfileDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(WorkoutTemplateDao.class, WorkoutTemplateDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(MealDao.class, MealDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -356,20 +456,6 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
   }
 
   @Override
-  public MealEntryDao mealEntryDao() {
-    if (_mealEntryDao != null) {
-      return _mealEntryDao;
-    } else {
-      synchronized(this) {
-        if(_mealEntryDao == null) {
-          _mealEntryDao = new MealEntryDao_Impl(this);
-        }
-        return _mealEntryDao;
-      }
-    }
-  }
-
-  @Override
   public MacroGoalDao macroGoalDao() {
     if (_macroGoalDao != null) {
       return _macroGoalDao;
@@ -379,6 +465,48 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
           _macroGoalDao = new MacroGoalDao_Impl(this);
         }
         return _macroGoalDao;
+      }
+    }
+  }
+
+  @Override
+  public UserProfileDao userProfileDao() {
+    if (_userProfileDao != null) {
+      return _userProfileDao;
+    } else {
+      synchronized(this) {
+        if(_userProfileDao == null) {
+          _userProfileDao = new UserProfileDao_Impl(this);
+        }
+        return _userProfileDao;
+      }
+    }
+  }
+
+  @Override
+  public WorkoutTemplateDao workoutTemplateDao() {
+    if (_workoutTemplateDao != null) {
+      return _workoutTemplateDao;
+    } else {
+      synchronized(this) {
+        if(_workoutTemplateDao == null) {
+          _workoutTemplateDao = new WorkoutTemplateDao_Impl(this);
+        }
+        return _workoutTemplateDao;
+      }
+    }
+  }
+
+  @Override
+  public MealDao mealDao() {
+    if (_mealDao != null) {
+      return _mealDao;
+    } else {
+      synchronized(this) {
+        if(_mealDao == null) {
+          _mealDao = new MealDao_Impl(this);
+        }
+        return _mealDao;
       }
     }
   }
