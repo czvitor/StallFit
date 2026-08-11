@@ -10,11 +10,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -26,19 +28,15 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vitorsousa.stallfit.di.AppViewModelProvider
-import com.vitorsousa.stallfit.ui.components.CalorieRing
-import com.vitorsousa.stallfit.ui.components.MacroProgressBar
 import com.vitorsousa.stallfit.ui.components.SectionHeader
 import com.vitorsousa.stallfit.ui.components.StatCard
-import com.vitorsousa.stallfit.ui.theme.CarbColor
-import com.vitorsousa.stallfit.ui.theme.FatColor
-import com.vitorsousa.stallfit.ui.theme.ProteinColor
 import kotlin.math.roundToInt
 
 @Composable
 fun DashboardScreen(
     onStartOrResumeWorkout: (sessionId: Long?) -> Unit,
     onOpenNutrition: () -> Unit,
+    onOpenProfile: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -50,18 +48,31 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item {
-            Column {
-                Text(
-                    text = "StällFit",
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.primary
-                )
-                Text(
-                    text = "Resumo de hoje",
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "StällFit",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                    Text(
+                        text = "Resumo de hoje",
+                        style = MaterialTheme.typography.headlineMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
+                IconButton(onClick = onOpenProfile) {
+                    Icon(
+                        imageVector = Icons.Filled.AccountCircle,
+                        contentDescription = "Perfil",
+                        tint = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         }
 
@@ -74,37 +85,30 @@ fun DashboardScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(20.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(20.dp)
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    CalorieRing(
-                        consumed = uiState.macroTotals.calories,
-                        goal = uiState.macroGoal?.calorieGoal ?: 0
+                    Text(
+                        text = "Metas do dia",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalArrangement = Arrangement.spacedBy(14.dp)
-                    ) {
-                        MacroProgressBar(
-                            name = "Proteína",
-                            consumed = uiState.macroTotals.protein,
-                            goal = uiState.macroGoal?.proteinGoal ?: 0,
-                            unit = "g",
-                            color = ProteinColor
+                    val goal = uiState.macroGoal
+                    if (goal != null) {
+                        Text(
+                            text = "${goal.calorieGoal} kcal",
+                            style = MaterialTheme.typography.headlineMedium,
+                            color = MaterialTheme.colorScheme.primary
                         )
-                        MacroProgressBar(
-                            name = "Carboidratos",
-                            consumed = uiState.macroTotals.carbs,
-                            goal = uiState.macroGoal?.carbGoal ?: 0,
-                            unit = "g",
-                            color = CarbColor
+                        Text(
+                            text = "Proteína ${goal.proteinGoal}g · Carboidratos ${goal.carbGoal}g · Gorduras ${goal.fatGoal}g",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        MacroProgressBar(
-                            name = "Gorduras",
-                            consumed = uiState.macroTotals.fat,
-                            goal = uiState.macroGoal?.fatGoal ?: 0,
-                            unit = "g",
-                            color = FatColor
+                    } else {
+                        Text(
+                            text = "Defina seu perfil ou suas metas para ver os alvos diários aqui.",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -123,9 +127,9 @@ fun DashboardScreen(
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
-                    label = "Refeições",
-                    value = "${uiState.macroTotals.caloriesRounded}",
-                    caption = "kcal registradas hoje",
+                    label = "Cardápio",
+                    value = "Refeições",
+                    caption = "Ver refeições salvas",
                     modifier = Modifier
                         .weight(1f)
                         .clickable(onClick = onOpenNutrition)

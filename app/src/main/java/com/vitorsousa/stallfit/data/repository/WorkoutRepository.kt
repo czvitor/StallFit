@@ -4,6 +4,7 @@ import com.vitorsousa.stallfit.core.util.DateUtils
 import com.vitorsousa.stallfit.data.local.dao.ExerciseDao
 import com.vitorsousa.stallfit.data.local.dao.SetEntryDao
 import com.vitorsousa.stallfit.data.local.dao.WorkoutSessionDao
+import com.vitorsousa.stallfit.data.local.entity.Equipment
 import com.vitorsousa.stallfit.data.local.entity.ExerciseEntity
 import com.vitorsousa.stallfit.data.local.entity.SetEntryEntity
 import com.vitorsousa.stallfit.data.local.entity.WorkoutSessionEntity
@@ -64,6 +65,6 @@ class WorkoutRepository(
     suspend fun getLastSetForExercise(exerciseId: Long): SetEntryEntity? =
         setEntryDao.getLastSetForExercise(exerciseId)
 
-    suspend fun addCustomExercise(name: String, muscleGroup: String): Long =
-        exerciseDao.insert(ExerciseEntity(name = name, muscleGroup = muscleGroup, isCustom = true))
+    suspend fun addCustomExercise(name: String, muscleGroup: String, equipment: Equipment = Equipment.NONE): Long =
+        exerciseDao.insert(ExerciseEntity(name = name, muscleGroup = muscleGroup, equipment = equipment, isCustom = true))
 }

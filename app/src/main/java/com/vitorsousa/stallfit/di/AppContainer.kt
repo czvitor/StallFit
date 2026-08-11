@@ -3,7 +3,9 @@ package com.vitorsousa.stallfit.di
 import android.content.Context
 import com.vitorsousa.stallfit.data.local.StallFitDatabase
 import com.vitorsousa.stallfit.data.repository.NutritionRepository
+import com.vitorsousa.stallfit.data.repository.ProfileRepository
 import com.vitorsousa.stallfit.data.repository.WorkoutRepository
+import com.vitorsousa.stallfit.data.repository.WorkoutTemplateRepository
 
 /**
  * Hand-rolled dependency container (no Hilt/Dagger): the app is a single module with a handful
@@ -24,8 +26,19 @@ class AppContainer(context: Context) {
     val nutritionRepository: NutritionRepository by lazy {
         NutritionRepository(
             foodDao = database.foodDao(),
-            mealEntryDao = database.mealEntryDao(),
+            mealDao = database.mealDao(),
             macroGoalDao = database.macroGoalDao()
+        )
+    }
+
+    val profileRepository: ProfileRepository by lazy {
+        ProfileRepository(userProfileDao = database.userProfileDao())
+    }
+
+    val workoutTemplateRepository: WorkoutTemplateRepository by lazy {
+        WorkoutTemplateRepository(
+            templateDao = database.workoutTemplateDao(),
+            sessionDao = database.workoutSessionDao()
         )
     }
 }

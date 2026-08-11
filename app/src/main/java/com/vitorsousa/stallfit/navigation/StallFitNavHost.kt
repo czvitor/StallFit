@@ -9,6 +9,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -21,10 +22,14 @@ import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.vitorsousa.stallfit.ui.dashboard.DashboardScreen
 import com.vitorsousa.stallfit.ui.goals.GoalsScreen
-import com.vitorsousa.stallfit.ui.nutrition.AddFoodEntryScreen
-import com.vitorsousa.stallfit.ui.nutrition.NutritionDiaryScreen
+import com.vitorsousa.stallfit.ui.nutrition.CreateMealScreen
+import com.vitorsousa.stallfit.ui.nutrition.MealDetailScreen
+import com.vitorsousa.stallfit.ui.nutrition.NutritionScreen
+import com.vitorsousa.stallfit.ui.profile.ProfileScreen
 import com.vitorsousa.stallfit.ui.workout.ActiveWorkoutScreen
+import com.vitorsousa.stallfit.ui.workout.CreateWorkoutScreen
 import com.vitorsousa.stallfit.ui.workout.WorkoutHomeScreen
+import com.vitorsousa.stallfit.ui.workout.WorkoutTemplateDetailScreen
 
 private val bottomNavItems = listOf(
     BottomNavItem(Destination.Dashboard, "Início", Icons.Filled.Home),
@@ -90,7 +95,8 @@ private fun StallFitNavHost(navController: NavHostController, modifier: Modifier
                         navController.navigate(Destination.Workout.route)
                     }
                 },
-                onOpenNutrition = { navController.navigate(Destination.Nutrition.route) }
+                onOpenNutrition = { navController.navigate(Destination.Nutrition.route) },
+                onOpenProfile = { navController.navigate(Destination.Profile.route) }
             )
         }
 
@@ -98,7 +104,11 @@ private fun StallFitNavHost(navController: NavHostController, modifier: Modifier
             WorkoutHomeScreen(
                 onOpenSession = { sessionId ->
                     navController.navigate(Destination.WorkoutSession.createRoute(sessionId))
-                }
+                },
+                onOpenTemplate = { templateId ->
+                    navController.navigate(Destination.WorkoutTemplateDetail.createRoute(templateId))
+                },
+                onCreateWorkout = { navController.navigate(Destination.CreateWorkout.route) }
             )
         }
 
@@ -109,27 +119,53 @@ private fun StallFitNavHost(navController: NavHostController, modifier: Modifier
             ActiveWorkoutScreen(onBack = { navController.popBackStack() })
         }
 
+        composable(Destination.CreateWorkout.route) {
+            CreateWorkoutScreen(onDone = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Destination.WorkoutTemplateDetail.route,
+            arguments = listOf(navArgument(Destination.WorkoutTemplateDetail.ARG_TEMPLATE_ID) { type = NavType.LongType })
+        ) {
+            WorkoutTemplateDetailScreen(onBack = { navController.popBackStack() })
+        }
+
         composable(Destination.Nutrition.route) {
-            NutritionDiaryScreen(
-                onAddFood = { mealType, dateEpochDay ->
-                    navController.navigate(Destination.AddFoodEntry.createRoute(mealType.name, dateEpochDay))
+            NutritionScreen(
+                onCreateMeal = { mealType ->
+                    navController.navigate(Destination.CreateMeal.createRoute(mealType.name))
+                },
+                onOpenMeal = { mealId ->
+                    navController.navigate(Destination.MealDetail.createRoute(mealId))
                 },
                 onOpenGoals = { navController.navigate(Destination.Goals.route) }
             )
         }
 
         composable(
-            route = Destination.AddFoodEntry.route,
+            route = Destination.CreateMeal.route,
             arguments = listOf(
-                navArgument(Destination.AddFoodEntry.ARG_MEAL_TYPE) { type = NavType.StringType },
-                navArgument(Destination.AddFoodEntry.ARG_DATE_EPOCH_DAY) { type = NavType.LongType }
+                navArgument(Destination.CreateMeal.ARG_MEAL_TYPE) { type = NavType.StringType }
             )
         ) {
-            AddFoodEntryScreen(onDone = { navController.popBackStack() })
+            CreateMealScreen(onDone = { navController.popBackStack() })
+        }
+
+        composable(
+            route = Destination.MealDetail.route,
+            arguments = listOf(
+                navArgument(Destination.MealDetail.ARG_MEAL_ID) { type = NavType.LongType }
+            )
+        ) {
+            MealDetailScreen(onBack = { navController.popBackStack() })
         }
 
         composable(Destination.Goals.route) {
             GoalsScreen(onBack = { navController.popBackStack() })
+        }
+
+        composable(Destination.Profile.route) {
+            ProfileScreen(onBack = { navController.popBackStack() })
         }
     }
 }

@@ -21,7 +21,7 @@ interface WorkoutSessionDao {
     @Query("SELECT * FROM workout_sessions WHERE id = :sessionId")
     fun getById(sessionId: Long): Flow<WorkoutSessionEntity?>
 
-    @Query("SELECT * FROM workout_sessions WHERE finishedAt IS NULL ORDER BY startedAt DESC LIMIT 1")
+    @Query("SELECT * FROM workout_sessions WHERE finishedAt IS NULL AND templateId IS NULL ORDER BY startedAt DESC LIMIT 1")
     fun getActiveSession(): Flow<WorkoutSessionEntity?>
 
     @Query("SELECT * FROM workout_sessions WHERE finishedAt IS NOT NULL ORDER BY startedAt DESC")
@@ -29,4 +29,13 @@ interface WorkoutSessionDao {
 
     @Query("SELECT * FROM workout_sessions WHERE startedAt BETWEEN :startMillis AND :endMillis ORDER BY startedAt DESC")
     fun getSessionsBetween(startMillis: Long, endMillis: Long): Flow<List<WorkoutSessionEntity>>
+
+    @Query(
+        """
+        SELECT * FROM workout_sessions
+        WHERE templateId = :templateId AND finishedAt IS NULL AND startedAt BETWEEN :startMillis AND :endMillis
+        ORDER BY startedAt DESC LIMIT 1
+        """
+    )
+    suspend fun getOpenSessionForTemplateToday(templateId: Long, startMillis: Long, endMillis: Long): WorkoutSessionEntity?
 }

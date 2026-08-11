@@ -3,6 +3,7 @@ package com.vitorsousa.stallfit.ui.workout
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vitorsousa.stallfit.data.repository.WorkoutRepository
+import com.vitorsousa.stallfit.data.repository.WorkoutTemplateRepository
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -13,15 +14,17 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 
 class WorkoutHomeViewModel(
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val workoutTemplateRepository: WorkoutTemplateRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<WorkoutHomeUiState> = combine(
         workoutRepository.activeSession,
         workoutRepository.completedSessions,
-        workoutRepository.getVolumeThisWeek()
-    ) { active, completed, volume ->
-        WorkoutHomeUiState(active, completed, volume)
+        workoutRepository.getVolumeThisWeek(),
+        workoutTemplateRepository.allTemplatesWithExercises
+    ) { active, completed, volume, templates ->
+        WorkoutHomeUiState(active, completed, volume, templates)
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),

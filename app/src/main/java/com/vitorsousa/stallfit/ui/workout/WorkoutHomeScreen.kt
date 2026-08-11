@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vitorsousa.stallfit.core.util.DateUtils
 import com.vitorsousa.stallfit.data.local.entity.WorkoutSessionEntity
+import com.vitorsousa.stallfit.data.local.relation.TemplateWithExercises
 import com.vitorsousa.stallfit.di.AppViewModelProvider
 import com.vitorsousa.stallfit.ui.components.EmptyState
 import com.vitorsousa.stallfit.ui.components.SectionHeader
@@ -40,6 +41,8 @@ import kotlin.math.roundToInt
 @Composable
 fun WorkoutHomeScreen(
     onOpenSession: (Long) -> Unit,
+    onOpenTemplate: (Long) -> Unit,
+    onCreateWorkout: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WorkoutHomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -88,6 +91,18 @@ fun WorkoutHomeScreen(
         }
 
         item {
+            SectionHeader(title = "Meus treinos", actionLabel = "Criar treino", onActionClick = onCreateWorkout)
+        }
+
+        if (uiState.templates.isEmpty()) {
+            item { EmptyState(message = "Crie uma ficha de treino reutilizável.") }
+        } else {
+            items(uiState.templates, key = { it.template.id }) { template ->
+                TemplateRow(template = template, onClick = { onOpenTemplate(template.template.id) })
+            }
+        }
+
+        item {
             SectionHeader(title = "Histórico")
         }
 
@@ -97,6 +112,43 @@ fun WorkoutHomeScreen(
             items(uiState.completedSessions, key = { it.id }) { session ->
                 SessionHistoryRow(session = session, onClick = { onOpenSession(session.id) })
             }
+        }
+    }
+}
+
+@Composable
+private fun TemplateRow(template: TemplateWithExercises, onClick: () -> Unit) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column {
+                Text(
+                    text = template.template.title,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    text = "${template.exercises.size} exercícios",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Icon(
+                imageVector = Icons.Filled.ChevronRight,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
     }
 }

@@ -1,6 +1,6 @@
 package com.vitorsousa.stallfit.domain.model
 
-import com.vitorsousa.stallfit.data.local.relation.MealEntryWithFood
+import com.vitorsousa.stallfit.data.local.relation.MealFoodItemWithFood
 import kotlin.math.roundToInt
 
 data class MacroTotals(
@@ -15,13 +15,9 @@ data class MacroTotals(
     val fatRounded: Int get() = fat.roundToInt()
 }
 
-fun List<MealEntryWithFood>.toMacroTotals(): MacroTotals = MacroTotals(
+fun List<MealFoodItemWithFood>.toMacroTotals(): MacroTotals = MacroTotals(
     calories = sumOf { it.calories },
     protein = sumOf { it.protein },
     carbs = sumOf { it.carbs },
     fat = sumOf { it.fat }
 )
-
-/** Guards every progress bar / ring in the UI against div-by-zero when a goal is unset. */
-fun Double.progressTowards(goal: Int): Float =
-    if (goal <= 0) 0f else (this / goal).toFloat().coerceIn(0f, 1f)

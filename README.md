@@ -29,23 +29,33 @@ O StällFit não escolhe lado. Ele registra sua tonelagem levantada no mesmo lug
 
 | Funcionalidade | Descrição |
 |---|---|
-| Registro de séries | Exercício, sets, reps e carga (kg) por sessão |
-| Timer de descanso | Contador regressivo entre séries com alertas configuráveis |
+| Fichas de treino | Monte uma ficha reutilizável (exercícios + séries, faixa de reps, descanso e intensidade) e treine a partir dela |
+| Registro por ficha | Tabela com carga (kg) por exercício e botão "Salvar Registro" por linha |
+| Registro livre | Fluxo ad-hoc de sessão sem ficha, para quem prefere registrar série a série na hora |
 | Progressive overload | Cálculo automático do volume total (tonelagem) por sessão e por semana |
 | Histórico de cargas | Último peso registrado no exercício aparece na tela antes de você começar |
 
-### Macro Tracker
+### Perfil & TMB
 
 | Funcionalidade | Descrição |
 |---|---|
-| Diário alimentar | Refeições organizadas por horário ao longo do dia |
-| Metas de macros | Barra de progresso em tempo real para proteína, carbo, gordura e calorias |
+| Dados do perfil | Idade, peso, altura, sexo, nível de atividade, objetivo e medidas corporais opcionais |
+| Cálculo metabólico | TMB (Mifflin-St Jeor), GET, meta calórica e meta de água calculados automaticamente a partir do objetivo |
+| Distribuição de macros | Proteína, carboidrato e gordura calculados a partir do objetivo e aplicados direto às Metas |
+
+### Cardápio
+
+| Funcionalidade | Descrição |
+|---|---|
+| Refeições reutilizáveis | Cadastre refeições nomeadas por categoria (café da manhã, almoço, lanche, jantar, ceia) |
+| Totais por refeição | Cada card de refeição mostra kcal, proteína, carboidrato e gordura somados dos ingredientes |
 | Base de alimentos | Cadastro próprio com ajuste livre de gramatura e valores nutricionais |
 
 ### Dashboard
 
-- Cruzamento direto entre treino do dia e ingestão calórica
-- Visão de progresso semanal em volume e macros
+- Metas diárias (calculadas no Perfil ou definidas manualmente) exibidas como referência fixa
+- Acesso rápido ao treino ativo e ao cardápio de refeições
+- Visão de progresso semanal em volume
 - Interface **dark-first**, pensada para legibilidade sob luz intensa de academia
 
 ---
@@ -89,17 +99,18 @@ app/src/main/java/com/vitorsousa/stallfit/
 ├── core/util/              # utilitários compartilhados (datas, dias-época)
 ├── data/
 │   ├── local/               # entities, DAOs, Converters e o StallFitDatabase (Room)
-│   └── repository/          # WorkoutRepository e NutritionRepository
+│   └── repository/          # WorkoutRepository, WorkoutTemplateRepository, NutritionRepository, ProfileRepository
 ├── di/                      # AppContainer + AppViewModelProvider
-├── domain/model/            # modelos derivados, ex.: MacroTotals
+├── domain/model/            # modelos derivados, ex.: MacroTotals, MetabolicCalculator
 ├── navigation/               # rotas (Destination) e o NavHost + bottom nav
 └── ui/
     ├── theme/                # paleta dark-first, tipografia
-    ├── components/           # StatCard, CalorieRing, MacroProgressBar, SectionHeader, EmptyState
-    ├── dashboard/             # tela inicial — resumo cruzado treino + nutrição
-    ├── workout/               # lista de treinos, sessão ativa, timer de descanso
-    ├── nutrition/             # diário de refeições, adicionar alimento
-    └── goals/                 # metas de macros
+    ├── components/           # StatCard, SectionHeader, EmptyState
+    ├── dashboard/             # tela inicial — metas do dia, treino ativo, atalho para o cardápio
+    ├── workout/               # fichas de treino, registro por ficha, sessão livre, histórico
+    ├── nutrition/             # cardápio de refeições reutilizáveis, criação de refeição, detalhe de ingredientes
+    ├── profile/               # perfil do usuário e cálculo de TMB/GET/macros
+    └── goals/                 # metas de macros (manuais ou aplicadas pelo Perfil)
 ```
 
 ---

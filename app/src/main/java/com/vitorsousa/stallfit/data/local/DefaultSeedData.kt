@@ -1,5 +1,6 @@
 package com.vitorsousa.stallfit.data.local
 
+import com.vitorsousa.stallfit.data.local.entity.Equipment
 import com.vitorsousa.stallfit.data.local.entity.ExerciseEntity
 import com.vitorsousa.stallfit.data.local.entity.FoodEntity
 import com.vitorsousa.stallfit.data.local.entity.MacroGoalEntity
@@ -12,25 +13,25 @@ import com.vitorsousa.stallfit.data.local.entity.MacroGoalEntity
 object DefaultSeedData {
 
     val exercises = listOf(
-        ExerciseEntity(name = "Supino Reto", muscleGroup = "Peito"),
-        ExerciseEntity(name = "Supino Inclinado", muscleGroup = "Peito"),
-        ExerciseEntity(name = "Crucifixo", muscleGroup = "Peito"),
-        ExerciseEntity(name = "Puxada Frontal", muscleGroup = "Costas"),
-        ExerciseEntity(name = "Remada Curvada", muscleGroup = "Costas"),
-        ExerciseEntity(name = "Levantamento Terra", muscleGroup = "Costas"),
-        ExerciseEntity(name = "Agachamento Livre", muscleGroup = "Pernas"),
-        ExerciseEntity(name = "Leg Press", muscleGroup = "Pernas"),
-        ExerciseEntity(name = "Cadeira Extensora", muscleGroup = "Pernas"),
-        ExerciseEntity(name = "Mesa Flexora", muscleGroup = "Pernas"),
-        ExerciseEntity(name = "Panturrilha em Pé", muscleGroup = "Pernas"),
-        ExerciseEntity(name = "Desenvolvimento Militar", muscleGroup = "Ombro"),
-        ExerciseEntity(name = "Elevação Lateral", muscleGroup = "Ombro"),
-        ExerciseEntity(name = "Rosca Direta", muscleGroup = "Bíceps"),
-        ExerciseEntity(name = "Rosca Alternada", muscleGroup = "Bíceps"),
-        ExerciseEntity(name = "Tríceps Corda", muscleGroup = "Tríceps"),
-        ExerciseEntity(name = "Tríceps Testa", muscleGroup = "Tríceps"),
-        ExerciseEntity(name = "Abdominal Supra", muscleGroup = "Abdômen"),
-        ExerciseEntity(name = "Prancha", muscleGroup = "Abdômen")
+        ExerciseEntity(name = "Supino Reto", muscleGroup = "Peito", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Supino Inclinado", muscleGroup = "Peito", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Crucifixo", muscleGroup = "Peito", equipment = Equipment.DUMBBELL),
+        ExerciseEntity(name = "Puxada Frontal", muscleGroup = "Costas", equipment = Equipment.MACHINE),
+        ExerciseEntity(name = "Remada Curvada", muscleGroup = "Costas", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Levantamento Terra", muscleGroup = "Costas", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Agachamento Livre", muscleGroup = "Pernas", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Leg Press", muscleGroup = "Pernas", equipment = Equipment.MACHINE),
+        ExerciseEntity(name = "Cadeira Extensora", muscleGroup = "Pernas", equipment = Equipment.MACHINE),
+        ExerciseEntity(name = "Mesa Flexora", muscleGroup = "Pernas", equipment = Equipment.MACHINE),
+        ExerciseEntity(name = "Panturrilha em Pé", muscleGroup = "Pernas", equipment = Equipment.NONE),
+        ExerciseEntity(name = "Desenvolvimento Militar", muscleGroup = "Ombro", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Elevação Lateral", muscleGroup = "Ombro", equipment = Equipment.DUMBBELL),
+        ExerciseEntity(name = "Rosca Direta", muscleGroup = "Bíceps", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Rosca Alternada", muscleGroup = "Bíceps", equipment = Equipment.DUMBBELL),
+        ExerciseEntity(name = "Tríceps Corda", muscleGroup = "Tríceps", equipment = Equipment.CABLE),
+        ExerciseEntity(name = "Tríceps Testa", muscleGroup = "Tríceps", equipment = Equipment.BARBELL),
+        ExerciseEntity(name = "Abdominal Supra", muscleGroup = "Abdômen", equipment = Equipment.NONE),
+        ExerciseEntity(name = "Prancha", muscleGroup = "Abdômen", equipment = Equipment.NONE)
     )
 
     val foods = listOf(

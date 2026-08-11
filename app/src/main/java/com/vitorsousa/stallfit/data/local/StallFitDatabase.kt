@@ -9,15 +9,21 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 import com.vitorsousa.stallfit.data.local.dao.ExerciseDao
 import com.vitorsousa.stallfit.data.local.dao.FoodDao
 import com.vitorsousa.stallfit.data.local.dao.MacroGoalDao
-import com.vitorsousa.stallfit.data.local.dao.MealEntryDao
+import com.vitorsousa.stallfit.data.local.dao.MealDao
 import com.vitorsousa.stallfit.data.local.dao.SetEntryDao
+import com.vitorsousa.stallfit.data.local.dao.UserProfileDao
 import com.vitorsousa.stallfit.data.local.dao.WorkoutSessionDao
+import com.vitorsousa.stallfit.data.local.dao.WorkoutTemplateDao
 import com.vitorsousa.stallfit.data.local.entity.ExerciseEntity
 import com.vitorsousa.stallfit.data.local.entity.FoodEntity
 import com.vitorsousa.stallfit.data.local.entity.MacroGoalEntity
-import com.vitorsousa.stallfit.data.local.entity.MealEntryEntity
+import com.vitorsousa.stallfit.data.local.entity.MealEntity
+import com.vitorsousa.stallfit.data.local.entity.MealFoodItemEntity
 import com.vitorsousa.stallfit.data.local.entity.SetEntryEntity
+import com.vitorsousa.stallfit.data.local.entity.TemplateExerciseEntity
+import com.vitorsousa.stallfit.data.local.entity.UserProfileEntity
 import com.vitorsousa.stallfit.data.local.entity.WorkoutSessionEntity
+import com.vitorsousa.stallfit.data.local.entity.WorkoutTemplateEntity
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -29,10 +35,14 @@ import kotlinx.coroutines.launch
         WorkoutSessionEntity::class,
         SetEntryEntity::class,
         FoodEntity::class,
-        MealEntryEntity::class,
-        MacroGoalEntity::class
+        MacroGoalEntity::class,
+        UserProfileEntity::class,
+        WorkoutTemplateEntity::class,
+        TemplateExerciseEntity::class,
+        MealEntity::class,
+        MealFoodItemEntity::class
     ],
-    version = 1,
+    version = 2,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -42,8 +52,10 @@ abstract class StallFitDatabase : RoomDatabase() {
     abstract fun workoutSessionDao(): WorkoutSessionDao
     abstract fun setEntryDao(): SetEntryDao
     abstract fun foodDao(): FoodDao
-    abstract fun mealEntryDao(): MealEntryDao
     abstract fun macroGoalDao(): MacroGoalDao
+    abstract fun userProfileDao(): UserProfileDao
+    abstract fun workoutTemplateDao(): WorkoutTemplateDao
+    abstract fun mealDao(): MealDao
 
     companion object {
         @Volatile
@@ -57,6 +69,9 @@ abstract class StallFitDatabase : RoomDatabase() {
                     "stallfit.db"
                 )
                     .addCallback(seedCallback)
+                    // Pre-release app with no real user data to preserve — a schema bump just
+                    // wipes and reseeds rather than carrying hand-written Migration objects.
+                    .fallbackToDestructiveMigration()
                     .build()
                     .also { INSTANCE = it }
             }

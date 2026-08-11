@@ -92,7 +92,7 @@ fun GoalsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Text(
-                text = "Defina suas metas diárias. Elas guiam o anel de calorias e as barras de macros no Dashboard e no Diário.",
+                text = "Defina suas metas diárias. Elas aparecem no Dashboard e podem ser recalculadas automaticamente a partir do seu Perfil.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

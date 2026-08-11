@@ -8,10 +8,14 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import com.vitorsousa.stallfit.StallFitApp
 import com.vitorsousa.stallfit.ui.dashboard.DashboardViewModel
 import com.vitorsousa.stallfit.ui.goals.GoalsViewModel
-import com.vitorsousa.stallfit.ui.nutrition.AddFoodEntryViewModel
-import com.vitorsousa.stallfit.ui.nutrition.NutritionDiaryViewModel
+import com.vitorsousa.stallfit.ui.nutrition.CreateMealViewModel
+import com.vitorsousa.stallfit.ui.nutrition.MealDetailViewModel
+import com.vitorsousa.stallfit.ui.nutrition.NutritionViewModel
+import com.vitorsousa.stallfit.ui.profile.ProfileViewModel
 import com.vitorsousa.stallfit.ui.workout.ActiveWorkoutViewModel
+import com.vitorsousa.stallfit.ui.workout.CreateWorkoutViewModel
 import com.vitorsousa.stallfit.ui.workout.WorkoutHomeViewModel
+import com.vitorsousa.stallfit.ui.workout.WorkoutTemplateDetailViewModel
 
 /** Retrieves the [AppContainer] from the [CreationExtras] the platform hands every ViewModel factory. */
 fun CreationExtras.stallFitContainer(): AppContainer =
@@ -30,7 +34,23 @@ object AppViewModelProvider {
             )
         }
         initializer {
-            WorkoutHomeViewModel(workoutRepository = stallFitContainer().workoutRepository)
+            WorkoutHomeViewModel(
+                workoutRepository = stallFitContainer().workoutRepository,
+                workoutTemplateRepository = stallFitContainer().workoutTemplateRepository
+            )
+        }
+        initializer {
+            CreateWorkoutViewModel(
+                workoutRepository = stallFitContainer().workoutRepository,
+                workoutTemplateRepository = stallFitContainer().workoutTemplateRepository
+            )
+        }
+        initializer {
+            WorkoutTemplateDetailViewModel(
+                savedStateHandle = createSavedStateHandle(),
+                workoutTemplateRepository = stallFitContainer().workoutTemplateRepository,
+                workoutRepository = stallFitContainer().workoutRepository
+            )
         }
         initializer {
             ActiveWorkoutViewModel(
@@ -39,16 +59,28 @@ object AppViewModelProvider {
             )
         }
         initializer {
-            NutritionDiaryViewModel(nutritionRepository = stallFitContainer().nutritionRepository)
+            NutritionViewModel(nutritionRepository = stallFitContainer().nutritionRepository)
         }
         initializer {
-            AddFoodEntryViewModel(
+            CreateMealViewModel(
+                savedStateHandle = createSavedStateHandle(),
+                nutritionRepository = stallFitContainer().nutritionRepository
+            )
+        }
+        initializer {
+            MealDetailViewModel(
                 savedStateHandle = createSavedStateHandle(),
                 nutritionRepository = stallFitContainer().nutritionRepository
             )
         }
         initializer {
             GoalsViewModel(nutritionRepository = stallFitContainer().nutritionRepository)
+        }
+        initializer {
+            ProfileViewModel(
+                profileRepository = stallFitContainer().profileRepository,
+                nutritionRepository = stallFitContainer().nutritionRepository
+            )
         }
     }
 }
