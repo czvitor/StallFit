@@ -52,9 +52,10 @@ O StällFit não escolhe lado. Ele registra sua tonelagem levantada no mesmo lug
 
 | Funcionalidade | Descrição |
 |---|---|
-| Dados do perfil | Idade, peso, altura, sexo, nível de atividade, objetivo e medidas corporais opcionais |
-| Cálculo metabólico | TMB (Mifflin-St Jeor), GET, meta calórica e meta de água calculados automaticamente a partir do objetivo |
+| Dados do perfil | Idade, sexo, nível de atividade e objetivo |
+| Cálculo metabólico | TMB (Mifflin-St Jeor), GET, meta calórica e meta de água calculados automaticamente a partir do objetivo e do registro de evolução física mais recente |
 | Distribuição de macros | Proteína, carboidrato e gordura calculados a partir do objetivo e aplicados direto às Metas |
+| Evolução física | Histórico de registros de peso, altura e medidas corporais ao longo do tempo, com detalhe e exclusão por registro |
 
 ### Cardápio
 
@@ -116,9 +117,9 @@ O projeto separa explicitamente a camada de dados, a lógica de domínio e a apr
 app/src/main/java/com/vitorsousa/stallfit/
 ├── MainActivity.kt        # ponto de entrada — exibe a splash e, em seguida, o tema/NavHost
 ├── StallFitApp.kt         # Application, dona do AppContainer (DI manual)
-├── core/util/              # utilitários compartilhados (datas, dias-época)
+├── core/util/              # utilitários compartilhados (datas, dias-época, normalização de texto)
 ├── data/
-│   ├── local/               # entities, DAOs, Converters e o StallFitDatabase (Room)
+│   ├── local/               # entities, DAOs, relations, Converters e o StallFitDatabase (Room)
 │   └── repository/          # WorkoutRepository, WorkoutTemplateRepository, NutritionRepository, ProfileRepository
 ├── di/                      # AppContainer + AppViewModelProvider
 ├── domain/model/            # modelos derivados, ex.: MacroTotals, MetabolicCalculator
@@ -130,7 +131,7 @@ app/src/main/java/com/vitorsousa/stallfit/
     ├── dashboard/             # tela inicial — metas do dia, treino ativo, atalho para o cardápio
     ├── workout/               # fichas de treino, registro por ficha, sessão livre, histórico
     ├── nutrition/             # cardápio de refeições reutilizáveis, criação de refeição, detalhe de ingredientes
-    ├── profile/               # perfil do usuário e cálculo de TMB/GET/macros
+    ├── profile/               # perfil do usuário, evolução física (histórico de medidas) e cálculo de TMB/GET/macros
     └── goals/                 # metas de macros (manuais ou aplicadas pelo Perfil)
 ```
 

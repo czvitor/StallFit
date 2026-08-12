@@ -1,5 +1,6 @@
 package com.vitorsousa.stallfit.data.repository
 
+import com.vitorsousa.stallfit.core.util.normalizedKey
 import com.vitorsousa.stallfit.data.local.dao.FoodDao
 import com.vitorsousa.stallfit.data.local.dao.MacroGoalDao
 import com.vitorsousa.stallfit.data.local.dao.MealDao
@@ -11,6 +12,7 @@ import com.vitorsousa.stallfit.data.local.entity.MealType
 import com.vitorsousa.stallfit.data.local.relation.MealFoodItemWithFood
 import com.vitorsousa.stallfit.data.local.relation.MealWithTotals
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** Single entry point for every read/write the UI needs from the nutrition tables. */
 class NutritionRepository(
@@ -18,7 +20,10 @@ class NutritionRepository(
     private val mealDao: MealDao,
     private val macroGoalDao: MacroGoalDao
 ) {
+    // distinctBy on the normalized name self-heals any duplicate/near-duplicate rows (accent or
+    // casing variations) that may already exist, on top of the insert-time guard below.
     val allFoods: Flow<List<FoodEntity>> = foodDao.getAll()
+        .map { foods -> foods.distinctBy { it.name.normalizedKey() } }
     val macroGoal: Flow<MacroGoalEntity?> = macroGoalDao.getGoal()
     val mealsWithTotals: Flow<List<MealWithTotals>> = mealDao.getMealsWithTotals()
 
@@ -40,16 +45,21 @@ class NutritionRepository(
         proteinPer100g: Double,
         carbsPer100g: Double,
         fatPer100g: Double
-    ): Long = foodDao.insert(
-        FoodEntity(
-            name = name,
-            caloriesPer100g = caloriesPer100g,
-            proteinPer100g = proteinPer100g,
-            carbsPer100g = carbsPer100g,
-            fatPer100g = fatPer100g,
-            isCustom = true
+    ): Long {
+        val key = name.normalizedKey()
+        val existing = foodDao.getAllOnce().firstOrNull { it.name.normalizedKey() == key }
+        if (existing != null) return existing.id
+        return foodDao.insert(
+            FoodEntity(
+                name = name,
+                caloriesPer100g = caloriesPer100g,
+                proteinPer100g = proteinPer100g,
+                carbsPer100g = carbsPer100g,
+                fatPer100g = fatPer100g,
+                isCustom = true
+            )
         )
-    )
+    }
 
     suspend fun setMacroGoal(goal: MacroGoalEntity) = macroGoalDao.upsert(goal)
 }

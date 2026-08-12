@@ -32,7 +32,10 @@ class AppContainer(context: Context) {
     }
 
     val profileRepository: ProfileRepository by lazy {
-        ProfileRepository(userProfileDao = database.userProfileDao())
+        ProfileRepository(
+            userProfileDao = database.userProfileDao(),
+            bodyMeasurementDao = database.bodyMeasurementDao()
+        )
     }
 
     val workoutTemplateRepository: WorkoutTemplateRepository by lazy {

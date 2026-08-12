@@ -11,6 +11,8 @@ import androidx.room.util.DBUtil;
 import androidx.room.util.TableInfo;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import androidx.sqlite.db.SupportSQLiteOpenHelper;
+import com.vitorsousa.stallfit.data.local.dao.BodyMeasurementDao;
+import com.vitorsousa.stallfit.data.local.dao.BodyMeasurementDao_Impl;
 import com.vitorsousa.stallfit.data.local.dao.ExerciseDao;
 import com.vitorsousa.stallfit.data.local.dao.ExerciseDao_Impl;
 import com.vitorsousa.stallfit.data.local.dao.FoodDao;
@@ -59,10 +61,12 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
 
   private volatile MealDao _mealDao;
 
+  private volatile BodyMeasurementDao _bodyMeasurementDao;
+
   @Override
   @NonNull
   protected SupportSQLiteOpenHelper createOpenHelper(@NonNull final DatabaseConfiguration config) {
-    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(2) {
+    final SupportSQLiteOpenHelper.Callback _openCallback = new RoomOpenHelper(config, new RoomOpenHelper.Delegate(3) {
       @Override
       public void createAllTables(@NonNull final SupportSQLiteDatabase db) {
         db.execSQL("CREATE TABLE IF NOT EXISTS `exercises` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `muscleGroup` TEXT NOT NULL, `equipment` TEXT NOT NULL, `isCustom` INTEGER NOT NULL)");
@@ -73,7 +77,7 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_set_entries_exerciseId` ON `set_entries` (`exerciseId`)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `foods` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `caloriesPer100g` REAL NOT NULL, `proteinPer100g` REAL NOT NULL, `carbsPer100g` REAL NOT NULL, `fatPer100g` REAL NOT NULL, `isCustom` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `macro_goal` (`id` INTEGER NOT NULL, `calorieGoal` INTEGER NOT NULL, `proteinGoal` INTEGER NOT NULL, `carbGoal` INTEGER NOT NULL, `fatGoal` INTEGER NOT NULL, PRIMARY KEY(`id`))");
-        db.execSQL("CREATE TABLE IF NOT EXISTS `user_profile` (`id` INTEGER NOT NULL, `ageYears` INTEGER NOT NULL, `weightKg` REAL NOT NULL, `heightCm` REAL NOT NULL, `sex` TEXT NOT NULL, `activityLevel` TEXT NOT NULL, `goal` TEXT NOT NULL, `armCm` REAL, `chestCm` REAL, `hipCm` REAL, `thighCm` REAL, `calfCm` REAL, PRIMARY KEY(`id`))");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `user_profile` (`id` INTEGER NOT NULL, `name` TEXT NOT NULL, `ageYears` INTEGER NOT NULL, `sex` TEXT NOT NULL, `activityLevel` TEXT NOT NULL, `goal` TEXT NOT NULL, PRIMARY KEY(`id`))");
         db.execSQL("CREATE TABLE IF NOT EXISTS `workout_templates` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `title` TEXT NOT NULL, `createdAt` INTEGER NOT NULL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS `template_exercises` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `templateId` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, `orderIndex` INTEGER NOT NULL, `sets` INTEGER NOT NULL, `repRangeMin` INTEGER NOT NULL, `repRangeMax` INTEGER NOT NULL, `restSeconds` INTEGER NOT NULL, `intensity` TEXT NOT NULL, FOREIGN KEY(`templateId`) REFERENCES `workout_templates`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_template_exercises_templateId` ON `template_exercises` (`templateId`)");
@@ -82,8 +86,9 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
         db.execSQL("CREATE TABLE IF NOT EXISTS `meal_food_items` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `mealId` INTEGER NOT NULL, `foodId` INTEGER NOT NULL, `grams` REAL NOT NULL, FOREIGN KEY(`mealId`) REFERENCES `meals`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`foodId`) REFERENCES `foods`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_meal_food_items_mealId` ON `meal_food_items` (`mealId`)");
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_meal_food_items_foodId` ON `meal_food_items` (`foodId`)");
+        db.execSQL("CREATE TABLE IF NOT EXISTS `body_measurements` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `createdAt` INTEGER NOT NULL, `weightKg` REAL NOT NULL, `heightCm` REAL NOT NULL, `chestCm` REAL, `waistCm` REAL, `abdomenCm` REAL, `hipCm` REAL, `armLeftRelaxedCm` REAL, `armLeftFlexedCm` REAL, `armRightRelaxedCm` REAL, `armRightFlexedCm` REAL, `forearmLeftCm` REAL, `forearmRightCm` REAL, `thighLeftCm` REAL, `thighRightCm` REAL, `calfLeftCm` REAL, `calfRightCm` REAL, `bodyFatPercent` REAL, `leanMassKg` REAL, `fatMassKg` REAL, `bodyWaterPercent` REAL, `tricepsFoldMm` REAL, `subscapularFoldMm` REAL, `suprailiacFoldMm` REAL, `abdominalFoldMm` REAL, `thighFoldMm` REAL, `chestFoldMm` REAL, `midaxillaryFoldMm` REAL)");
         db.execSQL("CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)");
-        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9fe47a264a5749aa0bd152a4c6a8d692')");
+        db.execSQL("INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'c4e9df99477f0ee911dbdf695204ea78')");
       }
 
       @Override
@@ -98,6 +103,7 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
         db.execSQL("DROP TABLE IF EXISTS `template_exercises`");
         db.execSQL("DROP TABLE IF EXISTS `meals`");
         db.execSQL("DROP TABLE IF EXISTS `meal_food_items`");
+        db.execSQL("DROP TABLE IF EXISTS `body_measurements`");
         final List<? extends RoomDatabase.Callback> _callbacks = mCallbacks;
         if (_callbacks != null) {
           for (RoomDatabase.Callback _callback : _callbacks) {
@@ -227,19 +233,13 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
                   + " Expected:\n" + _infoMacroGoal + "\n"
                   + " Found:\n" + _existingMacroGoal);
         }
-        final HashMap<String, TableInfo.Column> _columnsUserProfile = new HashMap<String, TableInfo.Column>(12);
+        final HashMap<String, TableInfo.Column> _columnsUserProfile = new HashMap<String, TableInfo.Column>(6);
         _columnsUserProfile.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsUserProfile.put("name", new TableInfo.Column("name", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProfile.put("ageYears", new TableInfo.Column("ageYears", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUserProfile.put("weightKg", new TableInfo.Column("weightKg", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUserProfile.put("heightCm", new TableInfo.Column("heightCm", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProfile.put("sex", new TableInfo.Column("sex", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProfile.put("activityLevel", new TableInfo.Column("activityLevel", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
         _columnsUserProfile.put("goal", new TableInfo.Column("goal", "TEXT", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUserProfile.put("armCm", new TableInfo.Column("armCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUserProfile.put("chestCm", new TableInfo.Column("chestCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUserProfile.put("hipCm", new TableInfo.Column("hipCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUserProfile.put("thighCm", new TableInfo.Column("thighCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
-        _columnsUserProfile.put("calfCm", new TableInfo.Column("calfCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
         final HashSet<TableInfo.ForeignKey> _foreignKeysUserProfile = new HashSet<TableInfo.ForeignKey>(0);
         final HashSet<TableInfo.Index> _indicesUserProfile = new HashSet<TableInfo.Index>(0);
         final TableInfo _infoUserProfile = new TableInfo("user_profile", _columnsUserProfile, _foreignKeysUserProfile, _indicesUserProfile);
@@ -317,9 +317,48 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
                   + " Expected:\n" + _infoMealFoodItems + "\n"
                   + " Found:\n" + _existingMealFoodItems);
         }
+        final HashMap<String, TableInfo.Column> _columnsBodyMeasurements = new HashMap<String, TableInfo.Column>(29);
+        _columnsBodyMeasurements.put("id", new TableInfo.Column("id", "INTEGER", true, 1, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("createdAt", new TableInfo.Column("createdAt", "INTEGER", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("weightKg", new TableInfo.Column("weightKg", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("heightCm", new TableInfo.Column("heightCm", "REAL", true, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("chestCm", new TableInfo.Column("chestCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("waistCm", new TableInfo.Column("waistCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("abdomenCm", new TableInfo.Column("abdomenCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("hipCm", new TableInfo.Column("hipCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("armLeftRelaxedCm", new TableInfo.Column("armLeftRelaxedCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("armLeftFlexedCm", new TableInfo.Column("armLeftFlexedCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("armRightRelaxedCm", new TableInfo.Column("armRightRelaxedCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("armRightFlexedCm", new TableInfo.Column("armRightFlexedCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("forearmLeftCm", new TableInfo.Column("forearmLeftCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("forearmRightCm", new TableInfo.Column("forearmRightCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("thighLeftCm", new TableInfo.Column("thighLeftCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("thighRightCm", new TableInfo.Column("thighRightCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("calfLeftCm", new TableInfo.Column("calfLeftCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("calfRightCm", new TableInfo.Column("calfRightCm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("bodyFatPercent", new TableInfo.Column("bodyFatPercent", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("leanMassKg", new TableInfo.Column("leanMassKg", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("fatMassKg", new TableInfo.Column("fatMassKg", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("bodyWaterPercent", new TableInfo.Column("bodyWaterPercent", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("tricepsFoldMm", new TableInfo.Column("tricepsFoldMm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("subscapularFoldMm", new TableInfo.Column("subscapularFoldMm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("suprailiacFoldMm", new TableInfo.Column("suprailiacFoldMm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("abdominalFoldMm", new TableInfo.Column("abdominalFoldMm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("thighFoldMm", new TableInfo.Column("thighFoldMm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("chestFoldMm", new TableInfo.Column("chestFoldMm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        _columnsBodyMeasurements.put("midaxillaryFoldMm", new TableInfo.Column("midaxillaryFoldMm", "REAL", false, 0, null, TableInfo.CREATED_FROM_ENTITY));
+        final HashSet<TableInfo.ForeignKey> _foreignKeysBodyMeasurements = new HashSet<TableInfo.ForeignKey>(0);
+        final HashSet<TableInfo.Index> _indicesBodyMeasurements = new HashSet<TableInfo.Index>(0);
+        final TableInfo _infoBodyMeasurements = new TableInfo("body_measurements", _columnsBodyMeasurements, _foreignKeysBodyMeasurements, _indicesBodyMeasurements);
+        final TableInfo _existingBodyMeasurements = TableInfo.read(db, "body_measurements");
+        if (!_infoBodyMeasurements.equals(_existingBodyMeasurements)) {
+          return new RoomOpenHelper.ValidationResult(false, "body_measurements(com.vitorsousa.stallfit.data.local.entity.BodyMeasurementEntity).\n"
+                  + " Expected:\n" + _infoBodyMeasurements + "\n"
+                  + " Found:\n" + _existingBodyMeasurements);
+        }
         return new RoomOpenHelper.ValidationResult(true, null);
       }
-    }, "9fe47a264a5749aa0bd152a4c6a8d692", "d63b324fd9678dd4d16faac2c815f548");
+    }, "c4e9df99477f0ee911dbdf695204ea78", "08d770797c19b3d7e45f59ff7724a2f8");
     final SupportSQLiteOpenHelper.Configuration _sqliteConfig = SupportSQLiteOpenHelper.Configuration.builder(config.context).name(config.name).callback(_openCallback).build();
     final SupportSQLiteOpenHelper _helper = config.sqliteOpenHelperFactory.create(_sqliteConfig);
     return _helper;
@@ -330,7 +369,7 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
   protected InvalidationTracker createInvalidationTracker() {
     final HashMap<String, String> _shadowTablesMap = new HashMap<String, String>(0);
     final HashMap<String, Set<String>> _viewTables = new HashMap<String, Set<String>>(0);
-    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "exercises","workout_sessions","set_entries","foods","macro_goal","user_profile","workout_templates","template_exercises","meals","meal_food_items");
+    return new InvalidationTracker(this, _shadowTablesMap, _viewTables, "exercises","workout_sessions","set_entries","foods","macro_goal","user_profile","workout_templates","template_exercises","meals","meal_food_items","body_measurements");
   }
 
   @Override
@@ -356,6 +395,7 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
       _db.execSQL("DELETE FROM `template_exercises`");
       _db.execSQL("DELETE FROM `meals`");
       _db.execSQL("DELETE FROM `meal_food_items`");
+      _db.execSQL("DELETE FROM `body_measurements`");
       super.setTransactionSuccessful();
     } finally {
       super.endTransaction();
@@ -381,6 +421,7 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
     _typeConvertersMap.put(UserProfileDao.class, UserProfileDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(WorkoutTemplateDao.class, WorkoutTemplateDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(MealDao.class, MealDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(BodyMeasurementDao.class, BodyMeasurementDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -507,6 +548,20 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
           _mealDao = new MealDao_Impl(this);
         }
         return _mealDao;
+      }
+    }
+  }
+
+  @Override
+  public BodyMeasurementDao bodyMeasurementDao() {
+    if (_bodyMeasurementDao != null) {
+      return _bodyMeasurementDao;
+    } else {
+      synchronized(this) {
+        if(_bodyMeasurementDao == null) {
+          _bodyMeasurementDao = new BodyMeasurementDao_Impl(this);
+        }
+        return _bodyMeasurementDao;
       }
     }
   }

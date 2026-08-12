@@ -21,21 +21,22 @@ class DashboardViewModel(
         workoutRepository.getVolumeToday(),
         nutritionRepository.macroGoal,
         workoutRepository.activeSession,
-        profileRepository.profile
-    ) { volume, goal, active, profile ->
+        profileRepository.profile,
+        profileRepository.latestMeasurement
+    ) { volume, goal, active, profile, latestMeasurement ->
         DashboardUiState(
             volumeToday = volume,
             macroGoal = goal,
-            metabolicResult = profile?.let {
+            metabolicResult = if (profile != null && latestMeasurement != null) {
                 MetabolicCalculator.calculate(
-                    ageYears = it.ageYears,
-                    weightKg = it.weightKg,
-                    heightCm = it.heightCm,
-                    sex = it.sex,
-                    activityLevel = it.activityLevel,
-                    goal = it.goal
+                    ageYears = profile.ageYears,
+                    weightKg = latestMeasurement.weightKg,
+                    heightCm = latestMeasurement.heightCm,
+                    sex = profile.sex,
+                    activityLevel = profile.activityLevel,
+                    goal = profile.goal
                 )
-            },
+            } else null,
             activeSession = active,
             isLoading = false
         )

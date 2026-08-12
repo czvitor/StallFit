@@ -12,6 +12,9 @@ interface ExerciseDao {
     @Query("SELECT * FROM exercises ORDER BY muscleGroup ASC, name ASC")
     fun getAll(): Flow<List<ExerciseEntity>>
 
+    @Query("SELECT * FROM exercises ORDER BY muscleGroup ASC, name ASC")
+    suspend fun getAllOnce(): List<ExerciseEntity>
+
     @Query("SELECT * FROM exercises WHERE id = :id")
     suspend fun getById(id: Long): ExerciseEntity?
 

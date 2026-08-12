@@ -1,6 +1,10 @@
 package com.vitorsousa.stallfit.navigation
 
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
@@ -23,7 +27,11 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -35,6 +43,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.NavHostController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
+import com.vitorsousa.stallfit.R
 import com.vitorsousa.stallfit.ui.components.StallFitTopBar
 import com.vitorsousa.stallfit.ui.dashboard.DashboardScreen
 import com.vitorsousa.stallfit.ui.goals.GoalsScreen
@@ -147,10 +156,25 @@ fun StallFitApp() {
             }
         }
     ) { innerPadding ->
-        StallFitNavHost(
-            navController = navController,
-            modifier = Modifier.padding(innerPadding)
-        )
+        Box(
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.stallfit_symbol),
+                contentDescription = null,
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onBackground),
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth(0.75f)
+                    .alpha(0.05f)
+            )
+            StallFitNavHost(
+                navController = navController,
+                modifier = Modifier.fillMaxSize()
+            )
+        }
     }
 }
 

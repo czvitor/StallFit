@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.vitorsousa.stallfit.data.local.dao.BodyMeasurementDao
 import com.vitorsousa.stallfit.data.local.dao.ExerciseDao
 import com.vitorsousa.stallfit.data.local.dao.FoodDao
 import com.vitorsousa.stallfit.data.local.dao.MacroGoalDao
@@ -14,6 +15,7 @@ import com.vitorsousa.stallfit.data.local.dao.SetEntryDao
 import com.vitorsousa.stallfit.data.local.dao.UserProfileDao
 import com.vitorsousa.stallfit.data.local.dao.WorkoutSessionDao
 import com.vitorsousa.stallfit.data.local.dao.WorkoutTemplateDao
+import com.vitorsousa.stallfit.data.local.entity.BodyMeasurementEntity
 import com.vitorsousa.stallfit.data.local.entity.ExerciseEntity
 import com.vitorsousa.stallfit.data.local.entity.FoodEntity
 import com.vitorsousa.stallfit.data.local.entity.MacroGoalEntity
@@ -40,9 +42,10 @@ import kotlinx.coroutines.launch
         WorkoutTemplateEntity::class,
         TemplateExerciseEntity::class,
         MealEntity::class,
-        MealFoodItemEntity::class
+        MealFoodItemEntity::class,
+        BodyMeasurementEntity::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -56,6 +59,7 @@ abstract class StallFitDatabase : RoomDatabase() {
     abstract fun userProfileDao(): UserProfileDao
     abstract fun workoutTemplateDao(): WorkoutTemplateDao
     abstract fun mealDao(): MealDao
+    abstract fun bodyMeasurementDao(): BodyMeasurementDao
 
     companion object {
         @Volatile

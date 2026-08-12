@@ -7,6 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.DragInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,8 +22,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.DeleteOutline
@@ -59,6 +60,7 @@ import com.vitorsousa.stallfit.data.local.entity.FoodEntity
 import com.vitorsousa.stallfit.di.AppViewModelProvider
 import com.vitorsousa.stallfit.ui.components.EmptyState
 import kotlin.math.roundToInt
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -87,12 +89,15 @@ fun CreateMealScreen(
     val coroutineScope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
 
-    // A focused field (e.g. "Nome da refeição") keeps asking the list to scroll itself back into
-    // view above the keyboard, which fights the user's manual scroll and breaks the sticky
-    // search header. Dismissing focus as soon as a drag starts removes that fight.
-    LaunchedEffect(listState.isScrollInProgress) {
-        if (listState.isScrollInProgress) {
-            focusManager.clearFocus()
+    // Focusing a field triggers Compose's automatic "scroll into view above the keyboard", which
+    // briefly flips isScrollInProgress too — watching that flag here would clear focus (and close
+    // the keyboard) the instant it opens, causing an open/close loop. Watching drag interactions
+    // instead only reacts to the user actually dragging the list with a finger.
+    LaunchedEffect(listState.interactionSource) {
+        listState.interactionSource.interactions.collect { interaction ->
+            if (interaction is DragInteraction.Start) {
+                focusManager.clearFocus()
+            }
         }
     }
 
@@ -108,7 +113,7 @@ fun CreateMealScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     IconButton(onClick = onDone) {
-                        Icon(imageVector = Icons.Filled.ArrowBack, contentDescription = "Voltar")
+                        Icon(imageVector = Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Voltar")
                     }
                     Text(
                         text = "Nova refeição em ${viewModel.mealType.label}",

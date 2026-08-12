@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.delay
 
 private val PRESETS = listOf(60, 90, 120, 180)
@@ -139,7 +140,7 @@ private fun formatSeconds(totalSeconds: Int): String {
 }
 
 private fun vibrateOnce(context: android.content.Context) {
-    val vibrator = context.getSystemService(android.content.Context.VIBRATOR_SERVICE) as? Vibrator ?: return
+    val vibrator = ContextCompat.getSystemService(context, Vibrator::class.java) ?: return
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
         vibrator.vibrate(VibrationEffect.createOneShot(400, VibrationEffect.DEFAULT_AMPLITUDE))
     }

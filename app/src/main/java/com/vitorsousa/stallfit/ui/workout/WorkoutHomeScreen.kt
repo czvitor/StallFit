@@ -15,8 +15,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Assignment
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -162,7 +162,7 @@ private fun StartWorkoutChoiceDialog(
                     onClick = onFreeform
                 )
                 StartOptionRow(
-                    icon = Icons.Filled.Assignment,
+                    icon = Icons.AutoMirrored.Filled.Assignment,
                     title = "A partir de uma ficha",
                     description = if (hasTemplates) {
                         "Use uma ficha pré-montada com exercícios e séries definidos."

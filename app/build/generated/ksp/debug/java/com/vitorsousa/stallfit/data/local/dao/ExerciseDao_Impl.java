@@ -150,6 +150,51 @@ public final class ExerciseDao_Impl implements ExerciseDao {
   }
 
   @Override
+  public Object getAllOnce(final Continuation<? super List<ExerciseEntity>> $completion) {
+    final String _sql = "SELECT * FROM exercises ORDER BY muscleGroup ASC, name ASC";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<List<ExerciseEntity>>() {
+      @Override
+      @NonNull
+      public List<ExerciseEntity> call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfName = CursorUtil.getColumnIndexOrThrow(_cursor, "name");
+          final int _cursorIndexOfMuscleGroup = CursorUtil.getColumnIndexOrThrow(_cursor, "muscleGroup");
+          final int _cursorIndexOfEquipment = CursorUtil.getColumnIndexOrThrow(_cursor, "equipment");
+          final int _cursorIndexOfIsCustom = CursorUtil.getColumnIndexOrThrow(_cursor, "isCustom");
+          final List<ExerciseEntity> _result = new ArrayList<ExerciseEntity>(_cursor.getCount());
+          while (_cursor.moveToNext()) {
+            final ExerciseEntity _item;
+            final long _tmpId;
+            _tmpId = _cursor.getLong(_cursorIndexOfId);
+            final String _tmpName;
+            _tmpName = _cursor.getString(_cursorIndexOfName);
+            final String _tmpMuscleGroup;
+            _tmpMuscleGroup = _cursor.getString(_cursorIndexOfMuscleGroup);
+            final Equipment _tmpEquipment;
+            final String _tmp;
+            _tmp = _cursor.getString(_cursorIndexOfEquipment);
+            _tmpEquipment = __converters.toEquipment(_tmp);
+            final boolean _tmpIsCustom;
+            final int _tmp_1;
+            _tmp_1 = _cursor.getInt(_cursorIndexOfIsCustom);
+            _tmpIsCustom = _tmp_1 != 0;
+            _item = new ExerciseEntity(_tmpId,_tmpName,_tmpMuscleGroup,_tmpEquipment,_tmpIsCustom);
+            _result.add(_item);
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
+  }
+
+  @Override
   public Object getById(final long id, final Continuation<? super ExerciseEntity> $completion) {
     final String _sql = "SELECT * FROM exercises WHERE id = ?";
     final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 1);
