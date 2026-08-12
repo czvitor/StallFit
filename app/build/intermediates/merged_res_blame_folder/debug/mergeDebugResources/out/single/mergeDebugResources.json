@@ -4,6 +4,14 @@
         "source": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-main-57:\\drawable\\ic_launcher_foreground.xml"
     },
     {
+        "merged": "com.vitorsousa.stallfit.app-debug-55:/drawable_stallfit_wordmark.xml.flat",
+        "source": "com.vitorsousa.stallfit.app-main-57:/drawable/stallfit_wordmark.xml"
+    },
+    {
+        "merged": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-debug-55:\\font_inter_variable.ttf.flat",
+        "source": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-main-57:\\font\\inter_variable.ttf"
+    },
+    {
         "merged": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-debug-55:\\mipmap-anydpi-v26_ic_launcher.xml.flat",
         "source": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-main-57:\\mipmap-anydpi-v26\\ic_launcher.xml"
     },
@@ -12,16 +20,16 @@
         "source": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-main-57:\\mipmap-anydpi-v26\\ic_launcher_round.xml"
     },
     {
+        "merged": "com.vitorsousa.stallfit.app-debug-55:/drawable_stallfit_symbol.xml.flat",
+        "source": "com.vitorsousa.stallfit.app-main-57:/drawable/stallfit_symbol.xml"
+    },
+    {
         "merged": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-debug-55:\\xml_data_extraction_rules.xml.flat",
         "source": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-main-57:\\xml\\data_extraction_rules.xml"
     },
     {
-        "merged": "com.vitorsousa.stallfit.app-debug-55:/font_space_grotesk_variable.ttf.flat",
-        "source": "com.vitorsousa.stallfit.app-main-57:/font/space_grotesk_variable.ttf"
-    },
-    {
-        "merged": "com.vitorsousa.stallfit.app-debug-55:/font_inter_variable.ttf.flat",
-        "source": "com.vitorsousa.stallfit.app-main-57:/font/inter_variable.ttf"
+        "merged": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-debug-55:\\font_space_grotesk_variable.ttf.flat",
+        "source": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-main-57:\\font\\space_grotesk_variable.ttf"
     },
     {
         "merged": "C:\\Users\\vitor\\.gradle\\daemon\\8.7\\com.vitorsousa.stallfit.app-debug-55:\\drawable_ic_launcher_background.xml.flat",

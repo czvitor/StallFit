@@ -12,6 +12,9 @@ interface MacroGoalDao {
     @Query("SELECT * FROM macro_goal WHERE id = ${MacroGoalEntity.SINGLETON_ID}")
     fun getGoal(): Flow<MacroGoalEntity?>
 
+    @Query("SELECT * FROM macro_goal WHERE id = ${MacroGoalEntity.SINGLETON_ID}")
+    suspend fun getGoalOnce(): MacroGoalEntity?
+
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun upsert(goal: MacroGoalEntity)
 }

@@ -30,6 +30,7 @@ O StällFit não escolhe lado. Ele registra sua tonelagem levantada no mesmo lug
 | Funcionalidade | Descrição |
 |---|---|
 | Fichas de treino | Monte uma ficha reutilizável (exercícios + séries, faixa de reps, descanso e intensidade) e treine a partir dela |
+| Banco de exercícios | Catálogo pré-carregado cobrindo máquina, barra, halter, cabo e peso corporal, com busca e criação de exercícios personalizados |
 | Registro por ficha | Tabela com carga (kg) por exercício e botão "Salvar Registro" por linha |
 | Registro livre | Fluxo ad-hoc de sessão sem ficha, para quem prefere registrar série a série na hora |
 | Progressive overload | Cálculo automático do volume total (tonelagem) por sessão e por semana |
@@ -49,14 +50,21 @@ O StällFit não escolhe lado. Ele registra sua tonelagem levantada no mesmo lug
 |---|---|
 | Refeições reutilizáveis | Cadastre refeições nomeadas por categoria (café da manhã, almoço, lanche, jantar, ceia) |
 | Totais por refeição | Cada card de refeição mostra kcal, proteína, carboidrato e gordura somados dos ingredientes |
-| Base de alimentos | Cadastro próprio com ajuste livre de gramatura e valores nutricionais |
+| Base de alimentos | Catálogo pré-carregado com dezenas de alimentos e valores nutricionais prontos, com busca e cadastro de alimentos personalizados |
 
 ### Dashboard
 
 - Metas diárias (calculadas no Perfil ou definidas manualmente) exibidas como referência fixa
+- Cards de TMB, Água, Volume hoje e GET com altura padronizada entre si
 - Acesso rápido ao treino ativo e ao cardápio de refeições
 - Visão de progresso semanal em volume
 - Interface **dark-first**, pensada para legibilidade sob luz intensa de academia
+
+### Navegação e identidade visual
+
+- Tela de abertura com animação de zoom-in do símbolo e fade-in do nome e subtítulo ao iniciar o app
+- Cabeçalho fixo com o logotipo (nome) e o título da página, presente nas quatro abas principais e que não rola junto com o conteúdo
+- Ícone do app derivado do símbolo da marca
 
 ---
 
@@ -94,7 +102,7 @@ O projeto separa explicitamente a camada de dados, a lógica de domínio e a apr
 
 ```
 app/src/main/java/com/vitorsousa/stallfit/
-├── MainActivity.kt        # ponto de entrada — instancia o tema e o NavHost
+├── MainActivity.kt        # ponto de entrada — exibe a splash e, em seguida, o tema/NavHost
 ├── StallFitApp.kt         # Application, dona do AppContainer (DI manual)
 ├── core/util/              # utilitários compartilhados (datas, dias-época)
 ├── data/
@@ -102,10 +110,11 @@ app/src/main/java/com/vitorsousa/stallfit/
 │   └── repository/          # WorkoutRepository, WorkoutTemplateRepository, NutritionRepository, ProfileRepository
 ├── di/                      # AppContainer + AppViewModelProvider
 ├── domain/model/            # modelos derivados, ex.: MacroTotals, MetabolicCalculator
-├── navigation/               # rotas (Destination) e o NavHost + bottom nav
+├── navigation/               # rotas (Destination), o NavHost, bottom nav e o cabeçalho fixo (StallFitTopBar)
 └── ui/
     ├── theme/                # paleta dark-first, tipografia
     ├── components/           # StatCard, SectionHeader, EmptyState
+    ├── splash/                # tela de abertura (zoom-in do símbolo + fade-in do nome/subtítulo)
     ├── dashboard/             # tela inicial — metas do dia, treino ativo, atalho para o cardápio
     ├── workout/               # fichas de treino, registro por ficha, sessão livre, histórico
     ├── nutrition/             # cardápio de refeições reutilizáveis, criação de refeição, detalhe de ingredientes

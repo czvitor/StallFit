@@ -30,7 +30,8 @@ object AppViewModelProvider {
         initializer {
             DashboardViewModel(
                 workoutRepository = stallFitContainer().workoutRepository,
-                nutritionRepository = stallFitContainer().nutritionRepository
+                nutritionRepository = stallFitContainer().nutritionRepository,
+                profileRepository = stallFitContainer().profileRepository
             )
         }
         initializer {

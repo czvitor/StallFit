@@ -1,6 +1,7 @@
 package com.vitorsousa.stallfit.data.local.dao;
 
 import android.database.Cursor;
+import android.os.CancellationSignal;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.room.CoroutinesRoom;
@@ -113,6 +114,47 @@ public final class MacroGoalDao_Impl implements MacroGoalDao {
         _statement.release();
       }
     });
+  }
+
+  @Override
+  public Object getGoalOnce(final Continuation<? super MacroGoalEntity> $completion) {
+    final String _sql = "SELECT * FROM macro_goal WHERE id = 1";
+    final RoomSQLiteQuery _statement = RoomSQLiteQuery.acquire(_sql, 0);
+    final CancellationSignal _cancellationSignal = DBUtil.createCancellationSignal();
+    return CoroutinesRoom.execute(__db, false, _cancellationSignal, new Callable<MacroGoalEntity>() {
+      @Override
+      @Nullable
+      public MacroGoalEntity call() throws Exception {
+        final Cursor _cursor = DBUtil.query(__db, _statement, false, null);
+        try {
+          final int _cursorIndexOfId = CursorUtil.getColumnIndexOrThrow(_cursor, "id");
+          final int _cursorIndexOfCalorieGoal = CursorUtil.getColumnIndexOrThrow(_cursor, "calorieGoal");
+          final int _cursorIndexOfProteinGoal = CursorUtil.getColumnIndexOrThrow(_cursor, "proteinGoal");
+          final int _cursorIndexOfCarbGoal = CursorUtil.getColumnIndexOrThrow(_cursor, "carbGoal");
+          final int _cursorIndexOfFatGoal = CursorUtil.getColumnIndexOrThrow(_cursor, "fatGoal");
+          final MacroGoalEntity _result;
+          if (_cursor.moveToFirst()) {
+            final int _tmpId;
+            _tmpId = _cursor.getInt(_cursorIndexOfId);
+            final int _tmpCalorieGoal;
+            _tmpCalorieGoal = _cursor.getInt(_cursorIndexOfCalorieGoal);
+            final int _tmpProteinGoal;
+            _tmpProteinGoal = _cursor.getInt(_cursorIndexOfProteinGoal);
+            final int _tmpCarbGoal;
+            _tmpCarbGoal = _cursor.getInt(_cursorIndexOfCarbGoal);
+            final int _tmpFatGoal;
+            _tmpFatGoal = _cursor.getInt(_cursorIndexOfFatGoal);
+            _result = new MacroGoalEntity(_tmpId,_tmpCalorieGoal,_tmpProteinGoal,_tmpCarbGoal,_tmpFatGoal);
+          } else {
+            _result = null;
+          }
+          return _result;
+        } finally {
+          _cursor.close();
+          _statement.release();
+        }
+      }
+    }, $completion);
   }
 
   @NonNull

@@ -1,33 +1,29 @@
 package com.vitorsousa.stallfit.ui.dashboard
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.vitorsousa.stallfit.di.AppViewModelProvider
+import com.vitorsousa.stallfit.ui.components.AppCard
 import com.vitorsousa.stallfit.ui.components.SectionHeader
 import com.vitorsousa.stallfit.ui.components.StatCard
 import kotlin.math.roundToInt
@@ -35,8 +31,6 @@ import kotlin.math.roundToInt
 @Composable
 fun DashboardScreen(
     onStartOrResumeWorkout: (sessionId: Long?) -> Unit,
-    onOpenNutrition: () -> Unit,
-    onOpenProfile: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: DashboardViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -48,39 +42,7 @@ fun DashboardScreen(
         verticalArrangement = Arrangement.spacedBy(20.dp)
     ) {
         item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Column {
-                    Text(
-                        text = "StällFit",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Text(
-                        text = "Resumo de hoje",
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-                IconButton(onClick = onOpenProfile) {
-                    Icon(
-                        imageVector = Icons.Filled.AccountCircle,
-                        contentDescription = "Perfil",
-                        tint = MaterialTheme.colorScheme.onBackground
-                    )
-                }
-            }
-        }
-
-        item {
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-            ) {
+            AppCard(modifier = Modifier.fillMaxWidth()) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -115,24 +77,39 @@ fun DashboardScreen(
             }
         }
 
-        item {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(14.dp)
-            ) {
+        val metabolicResult = uiState.metabolicResult
+        if (metabolicResult != null) {
+            item {
+                EqualHeightStatGrid(modifier = Modifier.fillMaxWidth()) {
+                    StatCard(
+                        label = "TMB",
+                        value = "${metabolicResult.bmr} kcal",
+                        caption = "Taxa metabólica basal"
+                    )
+                    StatCard(
+                        label = "Água",
+                        value = "${metabolicResult.waterGoalMl} ml",
+                        caption = "Meta diária de hidratação"
+                    )
+                    StatCard(
+                        label = "Volume hoje",
+                        value = "${uiState.volumeToday.roundToInt()} kg",
+                        caption = "Tonelagem levantada"
+                    )
+                    StatCard(
+                        label = "GET",
+                        value = "${metabolicResult.tdee} kcal",
+                        caption = "Gasto energético total"
+                    )
+                }
+            }
+        } else {
+            item {
                 StatCard(
                     label = "Volume hoje",
                     value = "${uiState.volumeToday.roundToInt()} kg",
                     caption = "Tonelagem levantada",
-                    modifier = Modifier.weight(1f)
-                )
-                StatCard(
-                    label = "Cardápio",
-                    value = "Refeições",
-                    caption = "Ver refeições salvas",
-                    modifier = Modifier
-                        .weight(1f)
-                        .clickable(onClick = onOpenNutrition)
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
         }
@@ -151,6 +128,46 @@ fun DashboardScreen(
                     text = if (uiState.activeSession != null) "Continuar treino em andamento" else "Iniciar novo treino",
                     modifier = Modifier.padding(start = 8.dp)
                 )
+            }
+        }
+    }
+}
+
+/**
+ * Lays out its children in a 2-column grid where every cell shares the height of the tallest
+ * child — e.g. TMB/Água/Volume hoje/GET, whose captions wrap to different line counts and would
+ * otherwise end up with mismatched card heights.
+ */
+@Composable
+private fun EqualHeightStatGrid(
+    modifier: Modifier = Modifier,
+    horizontalSpacing: Dp = 14.dp,
+    verticalSpacing: Dp = 14.dp,
+    content: @Composable () -> Unit
+) {
+    Layout(content = content, modifier = modifier) { measurables, constraints ->
+        val columns = 2
+        val hSpacingPx = horizontalSpacing.roundToPx()
+        val vSpacingPx = verticalSpacing.roundToPx()
+        val columnWidth = (constraints.maxWidth - hSpacingPx * (columns - 1)) / columns
+        val maxHeight = measurables.maxOf { it.maxIntrinsicHeight(columnWidth) }
+        val cellConstraints = Constraints(
+            minWidth = columnWidth,
+            maxWidth = columnWidth,
+            minHeight = maxHeight,
+            maxHeight = maxHeight
+        )
+        val placeables = measurables.map { it.measure(cellConstraints) }
+        val rows = (placeables.size + columns - 1) / columns
+        val totalHeight = maxHeight * rows + vSpacingPx * (rows - 1)
+
+        layout(constraints.maxWidth, totalHeight) {
+            placeables.forEachIndexed { index, placeable ->
+                val row = index / columns
+                val col = index % columns
+                val x = col * (columnWidth + hSpacingPx)
+                val y = row * (maxHeight + vSpacingPx)
+                placeable.placeRelative(x, y)
             }
         }
     }

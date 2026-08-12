@@ -33,5 +33,6 @@ sealed class Destination(val route: String) {
 data class BottomNavItem(
     val destination: Destination,
     val label: String,
-    val icon: androidx.compose.ui.graphics.vector.ImageVector
+    val selectedIcon: androidx.compose.ui.graphics.vector.ImageVector,
+    val unselectedIcon: androidx.compose.ui.graphics.vector.ImageVector
 )

@@ -78,18 +78,39 @@ abstract class StallFitDatabase : RoomDatabase() {
         }
 
         /**
-         * Populates default exercises, a starter food list, and a default macro goal the first
-         * time the database file is created. Runs on a background scope since Room callbacks
-         * execute on the database's own thread and must not block it with a runBlocking call.
+         * Populates default exercises, a starter food list, and a default macro goal. Runs on
+         * a background scope since Room callbacks execute on the database's own thread and must
+         * not block it with a runBlocking call.
+         *
+         * Seeding is checked on every [onOpen], not just [onCreate]: `fallbackToDestructiveMigration()`
+         * drops and recreates tables on a version bump for an already-installed app, but
+         * SQLiteOpenHelper only invokes `onCreate` for a brand-new database file — never for that
+         * upgrade path — so a schema bump alone would otherwise leave the tables permanently
+         * empty. The `count() == 0` guard keeps this a no-op once real data exists.
          */
         private val seedCallback = object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
+                seedIfEmpty()
+            }
+
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                super.onOpen(db)
+                seedIfEmpty()
+            }
+
+            private fun seedIfEmpty() {
                 val database = INSTANCE ?: return
                 CoroutineScope(SupervisorJob() + Dispatchers.IO).launch {
-                    database.exerciseDao().insertAll(DefaultSeedData.exercises)
-                    database.foodDao().insertAll(DefaultSeedData.foods)
-                    database.macroGoalDao().upsert(DefaultSeedData.defaultMacroGoal)
+                    if (database.exerciseDao().count() == 0) {
+                        database.exerciseDao().insertAll(DefaultSeedData.exercises)
+                    }
+                    if (database.foodDao().count() == 0) {
+                        database.foodDao().insertAll(DefaultSeedData.foods)
+                    }
+                    if (database.macroGoalDao().getGoalOnce() == null) {
+                        database.macroGoalDao().upsert(DefaultSeedData.defaultMacroGoal)
+                    }
                 }
             }
         }
