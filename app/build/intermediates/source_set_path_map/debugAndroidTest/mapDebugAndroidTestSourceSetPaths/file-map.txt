@@ -1,0 +1,4 @@
+com.vitorsousa.stallfit.test.app-androidTest-0 D:\Faculdade\Git\StällFit\app\build\generated\res\resValues\androidTest\debug
+com.vitorsousa.stallfit.test.app-mergeDebugAndroidTestResources-1 D:\Faculdade\Git\StällFit\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\merged.dir
+com.vitorsousa.stallfit.test.app-mergeDebugAndroidTestResources-2 D:\Faculdade\Git\StällFit\app\build\intermediates\incremental\debugAndroidTest\mergeDebugAndroidTestResources\stripped.dir
+com.vitorsousa.stallfit.test.app-debugAndroidTest-3 D:\Faculdade\Git\StällFit\app\build\intermediates\merged_res\debugAndroidTest\mergeDebugAndroidTestResources
