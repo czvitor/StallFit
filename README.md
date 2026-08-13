@@ -17,7 +17,7 @@
 
 ## 📲 Baixar e instalar
 
-**[⬇️ Baixar StällFit.apk](app/build/outputs/apk/debug/StällFit_v1.0.0.apk)** — build de debug mais recente, pronta para instalar em qualquer Android 8.0+ (API 26).
+**[⬇️ Baixar StällFit.apk](app/build/outputs/apk/debug/StällFit_v1.4.0.apk)** — build de debug mais recente, pronta para instalar em qualquer Android 8.0+ (API 26).
 
 1. Baixe o arquivo `.apk` acima no seu celular.
 2. Abra o arquivo baixado. Na primeira instalação, o Android pede permissão para instalar apps de fontes desconhecidas pelo app usado para abrir o arquivo (Chrome, Arquivos, etc.) — confirme.
