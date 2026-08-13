@@ -2,7 +2,9 @@ package com.vitorsousa.stallfit.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(tableName = "exercises")
 data class ExerciseEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

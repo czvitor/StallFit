@@ -31,6 +31,15 @@ class WorkoutTemplateRepository(
 
     suspend fun deleteTemplate(templateId: Long) = templateDao.deleteTemplate(templateId)
 
+    suspend fun updateReferenceWeight(templateExerciseId: Long, weightKg: Double?) =
+        templateDao.updateReferenceWeight(templateExerciseId, weightKg)
+
+    suspend fun updateNotes(templateId: Long, notes: String?) =
+        templateDao.updateNotes(templateId, notes?.ifBlank { null })
+
+    suspend fun getTemplateOnce(templateId: Long): WorkoutTemplateEntity? =
+        templateDao.getTemplateOnce(templateId)
+
     /** Reuses today's still-open session started for this template, or starts a fresh one. */
     suspend fun getOrStartSessionForTemplate(templateId: Long): Long {
         val existing = sessionDao.getOpenSessionForTemplateToday(

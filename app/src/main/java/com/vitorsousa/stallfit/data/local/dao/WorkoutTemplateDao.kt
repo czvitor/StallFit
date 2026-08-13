@@ -31,6 +31,12 @@ interface WorkoutTemplateDao {
     @Query("DELETE FROM workout_templates WHERE id = :templateId")
     suspend fun deleteTemplate(templateId: Long)
 
+    @Query("UPDATE template_exercises SET referenceWeightKg = :weightKg WHERE id = :templateExerciseId")
+    suspend fun updateReferenceWeight(templateExerciseId: Long, weightKg: Double?)
+
+    @Query("UPDATE workout_templates SET notes = :notes WHERE id = :templateId")
+    suspend fun updateNotes(templateId: Long, notes: String?)
+
     @Query("SELECT * FROM workout_templates WHERE id = :templateId")
     suspend fun getTemplateOnce(templateId: Long): WorkoutTemplateEntity?
 

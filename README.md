@@ -17,7 +17,7 @@
 
 ## 📲 Baixar e instalar
 
-**[⬇️ Baixar StällFit.apk](app/build/outputs/apk/debug/StällFit.apk)** — build de debug mais recente, pronta para instalar em qualquer Android 8.0+ (API 26).
+**[⬇️ Baixar StällFit.apk](app/build/outputs/apk/debug/StällFit_v1.0.0.apk)** — build de debug mais recente, pronta para instalar em qualquer Android 8.0+ (API 26).
 
 1. Baixe o arquivo `.apk` acima no seu celular.
 2. Abra o arquivo baixado. Na primeira instalação, o Android pede permissão para instalar apps de fontes desconhecidas pelo app usado para abrir o arquivo (Chrome, Arquivos, etc.) — confirme.
@@ -41,12 +41,15 @@ O StällFit não escolhe lado. Ele registra sua tonelagem levantada no mesmo lug
 
 | Funcionalidade | Descrição |
 |---|---|
-| Fichas de treino | Monte uma ficha reutilizável (exercícios + séries, faixa de reps, descanso e intensidade) e treine a partir dela |
+| Fichas de treino | Monte uma ficha reutilizável (exercícios + séries, faixa de reps, descanso e intensidade), edite ou exclua (com confirmação) a qualquer momento e inicie uma sessão de treino a partir dela |
 | Banco de exercícios | Catálogo pré-carregado cobrindo máquina, barra, halter, cabo e peso corporal, com busca e criação de exercícios personalizados |
-| Registro por ficha | Tabela com carga (kg) por exercício e botão "Salvar Registro" por linha |
+| Carga de referência | Peso de consulta editável por exercício direto na ficha, só para referência — a tonelagem (séries × repetições × carga) é sempre calculada durante uma sessão de treino ativa, nunca a partir da ficha estática |
+| Exportação em PDF | Gera uma ficha em PDF com a identidade visual do app — cabeçalho com logo, marca d'água, metadados do aluno e tabela de exercícios — pronta para impressão ou envio |
 | Registro livre | Fluxo ad-hoc de sessão sem ficha, para quem prefere registrar série a série na hora |
 | Progressive overload | Cálculo automático do volume total (tonelagem) por sessão e por semana |
 | Histórico de cargas | Último peso registrado no exercício aparece na tela antes de você começar |
+| Recorde pessoal (PR) | Maior carga já registrada em cada exercício, exibida durante a sessão ativa e na tela de Progresso |
+| Progresso por exercício | Tela dedicada com seletor de exercício, recorde pessoal, histórico completo de séries e gráfico de carga ao longo do tempo |
 
 ### Perfil & TMB
 
@@ -55,7 +58,8 @@ O StällFit não escolhe lado. Ele registra sua tonelagem levantada no mesmo lug
 | Dados do perfil | Idade, sexo, nível de atividade e objetivo |
 | Cálculo metabólico | TMB (Mifflin-St Jeor), GET, meta calórica e meta de água calculados automaticamente a partir do objetivo e do registro de evolução física mais recente |
 | Distribuição de macros | Proteína, carboidrato e gordura calculados a partir do objetivo e aplicados direto às Metas |
-| Evolução física | Histórico de registros de peso, altura e medidas corporais ao longo do tempo, com detalhe e exclusão por registro |
+| Evolução física | Histórico de registros de peso, altura e medidas corporais ao longo do tempo, com gráfico de evolução do peso, detalhe e exclusão por registro |
+| Backup e restauração modular | Exporta e importa por categoria (Treinos, Refeições, Perfil) ou tudo de uma vez, num `.json` com metadata de versão; importação detecta o conteúdo do arquivo e deixa escolher entre Mesclar/Somar ou Substituir por categoria — proteção extra além das migrations automáticas do banco |
 
 ### Cardápio
 
@@ -99,13 +103,28 @@ O StällFit é um app **Android nativo**, sem framework híbrido e sem backend �
 |---|---|
 | Linguagem | Kotlin |
 | UI | Jetpack Compose + Material 3 |
-| Persistência | Room (SQLite), 100% local |
+| Persistência | Room (SQLite), 100% local, com migrations versionadas (dados sobrevivem a atualizações do app) |
 | Navegação | Navigation Compose |
 | Concorrência | Coroutines + Flow (`StateFlow`, `combine`, `flatMapLatest`) |
 | Injeção de dependência | Manual (`AppContainer` + `viewModelFactory`), sem Hilt/Dagger |
+| Serialização | kotlinx.serialization (backup/restauração em JSON) |
 | Build | Gradle Kotlin DSL com catálogo de versões (`libs.versions.toml`) e KSP |
 
 Ver [SETUP.md](SETUP.md) para instruções de build e execução.
+
+---
+
+## Testes automatizados
+
+| Tipo | Cobertura |
+|---|---|
+| Unitário (JVM) | `MetabolicCalculatorTest` — cálculo de TMB, GET e macros para as combinações de sexo/nível de atividade/objetivo |
+| Instrumentado (Room) | `MigrationTest` — cada `Migration` registrada em `Migrations.kt`, validando que o schema resultante bate com o schema exportado pelo Room e que os dados existentes sobrevivem à migração |
+
+```bash
+./gradlew testDebugUnitTest        # unitários
+./gradlew connectedDebugAndroidTest # instrumentados (emulador/dispositivo conectado)
+```
 
 ---
 
@@ -119,17 +138,18 @@ app/src/main/java/com/vitorsousa/stallfit/
 ├── StallFitApp.kt         # Application, dona do AppContainer (DI manual)
 ├── core/util/              # utilitários compartilhados (datas, dias-época, normalização de texto)
 ├── data/
-│   ├── local/               # entities, DAOs, relations, Converters e o StallFitDatabase (Room)
-│   └── repository/          # WorkoutRepository, WorkoutTemplateRepository, NutritionRepository, ProfileRepository
+│   ├── local/               # entities, DAOs, relations, Converters, Migrations.kt e o StallFitDatabase (Room)
+│   ├── backup/              # BackupModule/BackupEnvelope — schema modular de backup por categoria (treinos/refeições/perfil)
+│   └── repository/          # WorkoutRepository, WorkoutTemplateRepository, NutritionRepository, ProfileRepository, BackupRepository
 ├── di/                      # AppContainer + AppViewModelProvider
 ├── domain/model/            # modelos derivados, ex.: MacroTotals, MetabolicCalculator
 ├── navigation/               # rotas (Destination), o NavHost, bottom nav e o cabeçalho fixo (StallFitTopBar)
 └── ui/
     ├── theme/                # paleta dark-first, tipografia
-    ├── components/           # StatCard, SectionHeader, EmptyState
+    ├── components/           # StatCard, SectionHeader, EmptyState, LineChart (gráfico em Canvas)
     ├── splash/                # tela de abertura (zoom-in do símbolo + fade-in do nome/subtítulo)
     ├── dashboard/             # tela inicial — metas do dia, treino ativo, atalho para o cardápio
-    ├── workout/               # fichas de treino, registro por ficha, sessão livre, histórico
+    ├── workout/               # fichas de treino, registro por ficha, sessão livre, histórico, progresso por exercício (PR + gráfico)
     ├── nutrition/             # cardápio de refeições reutilizáveis, criação de refeição, detalhe de ingredientes
     ├── profile/               # perfil do usuário, evolução física (histórico de medidas) e cálculo de TMB/GET/macros
     └── goals/                 # metas de macros (manuais ou aplicadas pelo Perfil)

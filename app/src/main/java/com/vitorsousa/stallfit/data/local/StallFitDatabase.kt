@@ -6,6 +6,7 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.vitorsousa.stallfit.data.local.dao.BackupDao
 import com.vitorsousa.stallfit.data.local.dao.BodyMeasurementDao
 import com.vitorsousa.stallfit.data.local.dao.ExerciseDao
 import com.vitorsousa.stallfit.data.local.dao.FoodDao
@@ -45,7 +46,7 @@ import kotlinx.coroutines.launch
         MealFoodItemEntity::class,
         BodyMeasurementEntity::class
     ],
-    version = 3,
+    version = StallFitDatabase.SCHEMA_VERSION,
     exportSchema = true
 )
 @TypeConverters(Converters::class)
@@ -60,8 +61,12 @@ abstract class StallFitDatabase : RoomDatabase() {
     abstract fun workoutTemplateDao(): WorkoutTemplateDao
     abstract fun mealDao(): MealDao
     abstract fun bodyMeasurementDao(): BodyMeasurementDao
+    abstract fun backupDao(): BackupDao
 
     companion object {
+        /** Single source of truth for the schema version, also read by [com.vitorsousa.stallfit.data.repository.BackupRepository] to reject backups from a stale schema. */
+        const val SCHEMA_VERSION = 4
+
         @Volatile
         private var INSTANCE: StallFitDatabase? = null
 
@@ -73,9 +78,11 @@ abstract class StallFitDatabase : RoomDatabase() {
                     "stallfit.db"
                 )
                     .addCallback(seedCallback)
-                    // Pre-release app with no real user data to preserve — a schema bump just
-                    // wipes and reseeds rather than carrying hand-written Migration objects.
-                    .fallbackToDestructiveMigration()
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    // Destructive fallback only covers a downgrade (installing an older APK over a
+                    // newer database, which has no valid migration path back). Every forward schema
+                    // bump must ship a real Migration in Migrations.kt — real user data is at stake.
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build()
                     .also { INSTANCE = it }
             }
@@ -86,11 +93,11 @@ abstract class StallFitDatabase : RoomDatabase() {
          * a background scope since Room callbacks execute on the database's own thread and must
          * not block it with a runBlocking call.
          *
-         * Seeding is checked on every [onOpen], not just [onCreate]: `fallbackToDestructiveMigration()`
-         * drops and recreates tables on a version bump for an already-installed app, but
-         * SQLiteOpenHelper only invokes `onCreate` for a brand-new database file — never for that
-         * upgrade path — so a schema bump alone would otherwise leave the tables permanently
-         * empty. The `count() == 0` guard keeps this a no-op once real data exists.
+         * Seeding is checked on every [onOpen], not just [onCreate]: `onCreate` only fires for a
+         * brand-new database file, so a device that somehow starts from an empty `exercises`/`foods`
+         * table on a later version (e.g. `fallbackToDestructiveMigrationOnDowngrade()` kicking in)
+         * would otherwise stay permanently unseeded. The `count() == 0` guard keeps this a no-op
+         * once real data exists.
          */
         private val seedCallback = object : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {

@@ -54,24 +54,49 @@ Todos os dados ficam **apenas no dispositivo** — não há backend, login ou si
 
 ```
 app/src/main/java/com/vitorsousa/stallfit/
-├── MainActivity.kt          # ponto de entrada (setContent { StallFitTheme { StallFitApp() } })
-├── StallFitApp.kt           # Application, dono do AppContainer (DI manual)
-├── core/util/               # utilitários compartilhados (datas/dias-época)
+├── MainActivity.kt          # ponto de entrada — exibe a splash e, em seguida, o tema/NavHost
+├── StallFitApp.kt           # Application, dona do AppContainer (DI manual)
+├── core/util/               # utilitários compartilhados (datas, dias-época, normalização de texto)
 ├── data/
-│   ├── local/                # entities, DAOs, Converters, StallFitDatabase (Room), seed inicial
-│   └── repository/           # WorkoutRepository, NutritionRepository
+│   ├── local/                # entities, DAOs, relations, Converters, Migrations.kt e o StallFitDatabase (Room)
+│   ├── backup/                # BackupModule/BackupEnvelope — schema modular de backup por categoria (treinos/refeições/perfil)
+│   └── repository/           # WorkoutRepository, WorkoutTemplateRepository, NutritionRepository, ProfileRepository, BackupRepository
 ├── di/                       # AppContainer + AppViewModelProvider (DI manual, sem Hilt)
-├── domain/model/             # modelos derivados (ex.: MacroTotals)
-├── navigation/                # rotas (Destination) e o NavHost + bottom nav
+├── domain/model/             # modelos derivados (ex.: MacroTotals, MetabolicCalculator)
+├── navigation/                # rotas (Destination), o NavHost, bottom nav e o cabeçalho fixo (StallFitTopBar)
 └── ui/
     ├── theme/                 # paleta dark-first, tipografia, Theme.kt
-    ├── components/            # StatCard, CalorieRing, MacroProgressBar, SectionHeader, EmptyState
+    ├── components/            # StatCard, SectionHeader, EmptyState, LineChart (gráfico em Canvas)
+    ├── splash/                 # tela de abertura (zoom-in do símbolo + fade-in do nome/subtítulo)
     ├── dashboard/              # tela inicial (resumo cruzado treino + nutrição)
-    ├── workout/                # lista de treinos, sessão ativa, timer de descanso
-    ├── nutrition/              # diário de refeições, adicionar alimento
+    ├── workout/                # fichas de treino, sessão ativa, sessão livre, progresso por exercício (PR + gráfico)
+    ├── nutrition/              # cardápio de refeições reutilizáveis, criação de refeição
+    ├── profile/                # perfil do usuário, evolução física (gráfico) e cálculo de TMB/GET/macros
     └── goals/                  # metas de macros
+
+app/src/test/java/.../domain/model/          # testes unitários JVM (MetabolicCalculatorTest)
+app/src/androidTest/java/.../data/local/     # testes instrumentados (MigrationTest, roda em emulador/dispositivo)
+```
+
+## Rodando os testes
+
+```bash
+# Unitários (JVM, rápido, não precisa de emulador)
+./gradlew testDebugUnitTest
+
+# Instrumentados — validam as Migrations do Room, precisam de emulador/dispositivo conectado
+./gradlew connectedDebugAndroidTest
 ```
 
 ## Notas sobre este build
 
-Este código foi escrito e revisado manualmente, sem acesso a um toolchain Android local (sem JDK/Android SDK instalados no ambiente de desenvolvimento). As versões de bibliotecas foram fixadas deliberadamente (`gradle/libs.versions.toml`) em combinações conhecidas e estáveis entre si (Kotlin 1.9.24, Compose BOM 2024.06.00, compose compiler 1.5.14, AGP 8.4.2, Room 2.6.1) para reduzir o risco de incompatibilidade. Ainda assim, é recomendável que a primeira sincronização/build seja feita no Android Studio, que vai sinalizar rapidamente qualquer ajuste de versão necessário no seu ambiente local.
+As versões de bibliotecas foram fixadas deliberadamente (`gradle/libs.versions.toml`) em combinações conhecidas e estáveis entre si (Kotlin 1.9.24, Compose BOM 2024.06.00, compose compiler 1.5.14, AGP 8.4.2, Room 2.6.1) para reduzir o risco de incompatibilidade. `assembleDebug` e `testDebugUnitTest` são validados via linha de comando (JDK 21 + Gradle 8.7) a cada mudança relevante; ainda assim, é recomendável que a primeira sincronização/build seja feita no Android Studio, que vai sinalizar rapidamente qualquer ajuste de versão necessário no seu ambiente local.
+
+### ⚠️ O diretório de build fica fora da pasta do projeto
+
+`app/build.gradle.kts` redireciona `layout.buildDirectory` para `../StällFit-build/app` (uma pasta **irmã** da raiz do repositório), em vez do padrão `app/build/`. Isso existe porque o caractere `ä` no nome da pasta do projeto (`StällFit`) confunde algumas ferramentas do toolchain do AAPT2/Gradle em builds via linha de comando no Windows, causando merges de recursos incompletos silenciosos (sem erro de build) quando o output fica dentro da árvore do projeto.
+
+Na prática:
+- **Ignore** qualquer coisa em `app/build/` dentro do repositório — pode estar desatualizada ou simplesmente não ser usada.
+- O APK, os resultados de teste e todos os demais artefatos de build ficam em `../StällFit-build/app/outputs/...`, `../StällFit-build/app/...` etc., relativo à raiz do repositório.
+- Se você renomear ou mover a pasta do projeto, confirme que esse caminho relativo em `app/build.gradle.kts` ainda faz sentido.

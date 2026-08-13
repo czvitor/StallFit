@@ -21,36 +21,55 @@ import com.vitorsousa.stallfit.R
 
 /**
  * Fixed page header shown above the scrollable content of every top-level tab: the StällFit
- * name-only wordmark on the left, then the current page's title. Lives in [Scaffold]'s `topBar`
- * slot so it never scrolls with the page and stays in the same place across tab switches.
+ * symbol + name-only wordmark on top, then the current page's title below. Lives in [Scaffold]'s
+ * `topBar` slot so it never scrolls with the page and stays in the same place across tab switches.
  */
 @Composable
 fun StallFitTopBar(
     title: String,
+    isDarkTheme: Boolean = true,
     modifier: Modifier = Modifier,
     actions: @Composable RowScope.() -> Unit = {}
 ) {
     Column(modifier = modifier.fillMaxWidth()) {
-        Row(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 20.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            Image(
-                painter = painterResource(R.drawable.stallfit_wordmark),
-                contentDescription = "StällFit",
-                modifier = Modifier.height(20.dp)
-            )
-            Text(
-                text = title,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground,
-                modifier = Modifier.weight(1f)
-            )
-            actions()
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Image(
+                    painter = painterResource(
+                        if (isDarkTheme) R.drawable.stallfit_symbol else R.drawable.stallfit_symbol_light
+                    ),
+                    contentDescription = null,
+                    modifier = Modifier.height(22.dp)
+                )
+                Image(
+                    painter = painterResource(
+                        if (isDarkTheme) R.drawable.stallfit_wordmark else R.drawable.stallfit_wordmark_light
+                    ),
+                    contentDescription = "StällFit",
+                    modifier = Modifier.height(20.dp)
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground,
+                    modifier = Modifier.weight(1f)
+                )
+                actions()
+            }
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
     }

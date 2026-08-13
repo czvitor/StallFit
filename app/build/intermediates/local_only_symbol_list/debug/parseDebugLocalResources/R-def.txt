@@ -4,8 +4,11 @@ color background_dark
 color ic_launcher_background
 drawable ic_launcher_background
 drawable ic_launcher_foreground
+drawable stallfit_nome_subtitulo
 drawable stallfit_symbol
+drawable stallfit_symbol_light
 drawable stallfit_wordmark
+drawable stallfit_wordmark_light
 font inter_variable
 font space_grotesk_variable
 mipmap ic_launcher

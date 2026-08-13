@@ -67,8 +67,8 @@ class WorkoutRepository(
 
     suspend fun deleteSet(setEntry: SetEntryEntity) = setEntryDao.delete(setEntry)
 
-    suspend fun getLastSetForExercise(exerciseId: Long): SetEntryEntity? =
-        setEntryDao.getLastSetForExercise(exerciseId)
+    fun getSetsHistoryForExercise(exerciseId: Long): Flow<List<SetEntryEntity>> =
+        setEntryDao.getSetsHistoryForExercise(exerciseId)
 
     suspend fun addCustomExercise(name: String, muscleGroup: String, equipment: Equipment = Equipment.NONE): Long {
         val key = name.normalizedKey()

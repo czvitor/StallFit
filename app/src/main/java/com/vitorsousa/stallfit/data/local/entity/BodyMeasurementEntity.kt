@@ -2,6 +2,7 @@ package com.vitorsousa.stallfit.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
 /**
  * One row per "Avaliação Física" (assessment) — a history table, unlike the singleton
@@ -11,6 +12,7 @@ import androidx.room.PrimaryKey
  * [weightKg]/[heightCm] on the most recent row are what [com.vitorsousa.stallfit.domain.model.MetabolicCalculator]
  * now feeds on, replacing the fields that used to live directly on the profile.
  */
+@Serializable
 @Entity(tableName = "body_measurements")
 data class BodyMeasurementEntity(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,

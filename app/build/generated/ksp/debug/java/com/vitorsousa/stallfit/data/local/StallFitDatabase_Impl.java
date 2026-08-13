@@ -11,6 +11,8 @@ import androidx.room.util.DBUtil;
 import androidx.room.util.TableInfo;
 import androidx.sqlite.db.SupportSQLiteDatabase;
 import androidx.sqlite.db.SupportSQLiteOpenHelper;
+import com.vitorsousa.stallfit.data.local.dao.BackupDao;
+import com.vitorsousa.stallfit.data.local.dao.BackupDao_Impl;
 import com.vitorsousa.stallfit.data.local.dao.BodyMeasurementDao;
 import com.vitorsousa.stallfit.data.local.dao.BodyMeasurementDao_Impl;
 import com.vitorsousa.stallfit.data.local.dao.ExerciseDao;
@@ -62,6 +64,8 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
   private volatile MealDao _mealDao;
 
   private volatile BodyMeasurementDao _bodyMeasurementDao;
+
+  private volatile BackupDao _backupDao;
 
   @Override
   @NonNull
@@ -422,6 +426,7 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
     _typeConvertersMap.put(WorkoutTemplateDao.class, WorkoutTemplateDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(MealDao.class, MealDao_Impl.getRequiredConverters());
     _typeConvertersMap.put(BodyMeasurementDao.class, BodyMeasurementDao_Impl.getRequiredConverters());
+    _typeConvertersMap.put(BackupDao.class, BackupDao_Impl.getRequiredConverters());
     return _typeConvertersMap;
   }
 
@@ -562,6 +567,20 @@ public final class StallFitDatabase_Impl extends StallFitDatabase {
           _bodyMeasurementDao = new BodyMeasurementDao_Impl(this);
         }
         return _bodyMeasurementDao;
+      }
+    }
+  }
+
+  @Override
+  public BackupDao backupDao() {
+    if (_backupDao != null) {
+      return _backupDao;
+    } else {
+      synchronized(this) {
+        if(_backupDao == null) {
+          _backupDao = new BackupDao_Impl(this);
+        }
+        return _backupDao;
       }
     }
   }

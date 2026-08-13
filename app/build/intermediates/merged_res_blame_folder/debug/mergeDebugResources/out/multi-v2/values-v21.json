@@ -1,10 +1,10 @@
 {
     "logs": [
         {
-            "outputFile": "com.vitorsousa.stallfit.app-mergeDebugResources-53:/values-v21/values-v21.xml",
+            "outputFile": "com.vitorsousa.stallfit.app-mergeDebugResources-56:/values-v21/values-v21.xml",
             "map": [
                 {
-                    "source": "C:\\Users\\vitor\\.gradle\\caches\\transforms-4\\46a21c14270e3cffba1fc9e475e481c4\\transformed\\core-1.13.1\\res\\values-v21\\values-v21.xml",
+                    "source": "C:\\Users\\vitor\\.gradle\\caches\\transforms-4\\a9ebfab2c5bd81cec00c481f6b580ab4\\transformed\\core-1.13.1\\res\\values-v21\\values-v21.xml",
                     "from": {
                         "startLines": "2,3,4,5,6,7,8,9,10,13",
                         "startColumns": "4,4,4,4,4,4,4,4,4,4",

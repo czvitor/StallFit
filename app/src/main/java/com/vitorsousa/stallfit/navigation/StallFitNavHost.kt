@@ -8,8 +8,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.DarkMode
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.Restaurant
 import androidx.compose.material.icons.filled.Tune
 import androidx.compose.material.icons.outlined.AccountCircle
@@ -26,6 +28,7 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -34,6 +37,7 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -44,7 +48,9 @@ import androidx.navigation.NavHostController
 import androidx.navigation.navArgument
 import androidx.navigation.NavType
 import com.vitorsousa.stallfit.R
+import com.vitorsousa.stallfit.di.AppViewModelProvider
 import com.vitorsousa.stallfit.ui.components.StallFitTopBar
+import com.vitorsousa.stallfit.ui.theme.ThemeViewModel
 import com.vitorsousa.stallfit.ui.dashboard.DashboardScreen
 import com.vitorsousa.stallfit.ui.goals.GoalsScreen
 import com.vitorsousa.stallfit.ui.nutrition.CreateMealScreen
@@ -53,6 +59,7 @@ import com.vitorsousa.stallfit.ui.nutrition.NutritionScreen
 import com.vitorsousa.stallfit.ui.profile.ProfileScreen
 import com.vitorsousa.stallfit.ui.workout.ActiveWorkoutScreen
 import com.vitorsousa.stallfit.ui.workout.CreateWorkoutScreen
+import com.vitorsousa.stallfit.ui.workout.ExerciseProgressScreen
 import com.vitorsousa.stallfit.ui.workout.WorkoutHomeScreen
 import com.vitorsousa.stallfit.ui.workout.WorkoutTemplateDetailScreen
 
@@ -96,11 +103,15 @@ fun StallFitApp() {
     val currentRoute = backStackEntry?.destination?.route
     val showBottomBar = currentRoute in topLevelRoutes
 
+    val themeViewModel: ThemeViewModel = viewModel(factory = AppViewModelProvider.Factory)
+    val isDarkTheme by themeViewModel.isDarkTheme.collectAsState()
+
     Scaffold(
         topBar = {
             if (showBottomBar) {
                 StallFitTopBar(
                     title = topBarTitleFor(currentRoute),
+                    isDarkTheme = isDarkTheme,
                     actions = {
                         if (currentRoute == Destination.Nutrition.route) {
                             IconButton(onClick = { navController.navigate(Destination.Goals.route) }) {
@@ -110,6 +121,13 @@ fun StallFitApp() {
                                     tint = MaterialTheme.colorScheme.onSurface
                                 )
                             }
+                        }
+                        IconButton(onClick = { themeViewModel.toggleTheme() }) {
+                            Icon(
+                                imageVector = if (isDarkTheme) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                                contentDescription = if (isDarkTheme) "Ativar tema claro" else "Ativar tema escuro",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 )
@@ -205,8 +223,13 @@ private fun StallFitNavHost(navController: NavHostController, modifier: Modifier
                 onOpenTemplate = { templateId ->
                     navController.navigate(Destination.WorkoutTemplateDetail.createRoute(templateId))
                 },
-                onCreateWorkout = { navController.navigate(Destination.CreateWorkout.route) }
+                onCreateWorkout = { navController.navigate(Destination.CreateWorkout.route) },
+                onOpenProgress = { navController.navigate(Destination.ExerciseProgress.route) }
             )
+        }
+
+        composable(Destination.ExerciseProgress.route) {
+            ExerciseProgressScreen(onBack = { navController.popBackStack() })
         }
 
         composable(
@@ -224,7 +247,12 @@ private fun StallFitNavHost(navController: NavHostController, modifier: Modifier
             route = Destination.WorkoutTemplateDetail.route,
             arguments = listOf(navArgument(Destination.WorkoutTemplateDetail.ARG_TEMPLATE_ID) { type = NavType.LongType })
         ) {
-            WorkoutTemplateDetailScreen(onBack = { navController.popBackStack() })
+            WorkoutTemplateDetailScreen(
+                onBack = { navController.popBackStack() },
+                onStartSession = { sessionId ->
+                    navController.navigate(Destination.WorkoutSession.createRoute(sessionId))
+                }
+            )
         }
 
         composable(Destination.Nutrition.route) {

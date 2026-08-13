@@ -58,6 +58,7 @@ fun ActiveWorkoutScreen(
     val exercises by viewModel.exercises.collectAsState()
     val selectedExerciseId by viewModel.selectedExerciseId.collectAsState()
     val lastSet by viewModel.lastSetForSelected.collectAsState()
+    val bestSet by viewModel.bestSetForSelected.collectAsState()
 
     var exerciseMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var showAddExerciseDialog by rememberSaveable { mutableStateOf(false) }
@@ -153,6 +154,13 @@ fun ActiveWorkoutScreen(
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.primary
                                 )
+                                if (bestSet != null) {
+                                    Text(
+                                        text = "Recorde pessoal: ${formatWeight(bestSet!!.weightKg)} kg × ${bestSet!!.reps} reps",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.tertiary
+                                    )
+                                }
                             }
 
                             Row(

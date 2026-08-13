@@ -14,6 +14,8 @@ sealed class Destination(val route: String) {
 
     object CreateWorkout : Destination("workout/create")
 
+    object ExerciseProgress : Destination("workout/progress")
+
     object WorkoutTemplateDetail : Destination("workout/template/{templateId}") {
         const val ARG_TEMPLATE_ID = "templateId"
         fun createRoute(templateId: Long) = "workout/template/$templateId"

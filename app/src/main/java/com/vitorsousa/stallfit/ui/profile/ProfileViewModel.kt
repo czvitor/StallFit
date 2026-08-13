@@ -2,12 +2,16 @@ package com.vitorsousa.stallfit.ui.profile
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vitorsousa.stallfit.data.backup.BackupEnvelope
+import com.vitorsousa.stallfit.data.backup.BackupModule
+import com.vitorsousa.stallfit.data.backup.ImportStrategy
 import com.vitorsousa.stallfit.data.local.entity.ActivityLevel
 import com.vitorsousa.stallfit.data.local.entity.BiologicalSex
 import com.vitorsousa.stallfit.data.local.entity.BodyMeasurementEntity
 import com.vitorsousa.stallfit.data.local.entity.MacroGoalEntity
 import com.vitorsousa.stallfit.data.local.entity.NutritionGoal
 import com.vitorsousa.stallfit.data.local.entity.UserProfileEntity
+import com.vitorsousa.stallfit.data.repository.BackupRepository
 import com.vitorsousa.stallfit.data.repository.NutritionRepository
 import com.vitorsousa.stallfit.data.repository.ProfileRepository
 import com.vitorsousa.stallfit.domain.model.MetabolicCalculator
@@ -20,7 +24,8 @@ import kotlinx.coroutines.launch
 
 class ProfileViewModel(
     private val profileRepository: ProfileRepository,
-    private val nutritionRepository: NutritionRepository
+    private val nutritionRepository: NutritionRepository,
+    private val backupRepository: BackupRepository
 ) : ViewModel() {
 
     val uiState: StateFlow<ProfileUiState> = combine(
@@ -80,6 +85,33 @@ class ProfileViewModel(
             profileRepository.deleteMeasurement(measurement)
             recalculateAndPushGoal()
             onDeleted()
+        }
+    }
+
+    fun exportBackup(modules: Set<BackupModule>, onResult: (Result<String>) -> Unit) {
+        viewModelScope.launch {
+            onResult(runCatching { backupRepository.exportData(modules) })
+        }
+    }
+
+    fun inspectBackup(json: String, onResult: (Result<BackupEnvelope>) -> Unit) {
+        viewModelScope.launch {
+            onResult(runCatching { backupRepository.inspectBackup(json) })
+        }
+    }
+
+    fun importBackup(
+        envelope: BackupEnvelope,
+        selectedModules: Set<BackupModule>,
+        strategy: ImportStrategy,
+        onResult: (Result<Unit>) -> Unit
+    ) {
+        viewModelScope.launch {
+            val result = runCatching { backupRepository.importData(envelope, selectedModules, strategy) }
+            if (result.isSuccess) {
+                recalculateAndPushGoal()
+            }
+            onResult(result)
         }
     }
 

@@ -12,8 +12,10 @@ import com.vitorsousa.stallfit.ui.nutrition.CreateMealViewModel
 import com.vitorsousa.stallfit.ui.nutrition.MealDetailViewModel
 import com.vitorsousa.stallfit.ui.nutrition.NutritionViewModel
 import com.vitorsousa.stallfit.ui.profile.ProfileViewModel
+import com.vitorsousa.stallfit.ui.theme.ThemeViewModel
 import com.vitorsousa.stallfit.ui.workout.ActiveWorkoutViewModel
 import com.vitorsousa.stallfit.ui.workout.CreateWorkoutViewModel
+import com.vitorsousa.stallfit.ui.workout.ExerciseProgressViewModel
 import com.vitorsousa.stallfit.ui.workout.WorkoutHomeViewModel
 import com.vitorsousa.stallfit.ui.workout.WorkoutTemplateDetailViewModel
 
@@ -50,12 +52,17 @@ object AppViewModelProvider {
             WorkoutTemplateDetailViewModel(
                 savedStateHandle = createSavedStateHandle(),
                 workoutTemplateRepository = stallFitContainer().workoutTemplateRepository,
-                workoutRepository = stallFitContainer().workoutRepository
+                profileRepository = stallFitContainer().profileRepository
             )
         }
         initializer {
             ActiveWorkoutViewModel(
                 savedStateHandle = createSavedStateHandle(),
+                workoutRepository = stallFitContainer().workoutRepository
+            )
+        }
+        initializer {
+            ExerciseProgressViewModel(
                 workoutRepository = stallFitContainer().workoutRepository
             )
         }
@@ -80,8 +87,12 @@ object AppViewModelProvider {
         initializer {
             ProfileViewModel(
                 profileRepository = stallFitContainer().profileRepository,
-                nutritionRepository = stallFitContainer().nutritionRepository
+                nutritionRepository = stallFitContainer().nutritionRepository,
+                backupRepository = stallFitContainer().backupRepository
             )
+        }
+        initializer {
+            ThemeViewModel(themeRepository = stallFitContainer().themeRepository)
         }
     }
 }

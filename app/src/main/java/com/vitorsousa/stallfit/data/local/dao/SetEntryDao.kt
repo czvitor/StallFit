@@ -31,11 +31,10 @@ interface SetEntryDao {
         """
         SELECT * FROM set_entries
         WHERE exerciseId = :exerciseId
-        ORDER BY loggedAt DESC
-        LIMIT 1
+        ORDER BY loggedAt ASC
         """
     )
-    suspend fun getLastSetForExercise(exerciseId: Long): SetEntryEntity?
+    fun getSetsHistoryForExercise(exerciseId: Long): Flow<List<SetEntryEntity>>
 
     @Query(
         """

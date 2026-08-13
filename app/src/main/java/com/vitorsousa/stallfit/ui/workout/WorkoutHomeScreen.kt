@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.automirrored.filled.ShowChart
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Bolt
 import androidx.compose.material.icons.filled.ChevronRight
@@ -24,6 +25,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -51,6 +53,7 @@ fun WorkoutHomeScreen(
     onOpenSession: (Long) -> Unit,
     onOpenTemplate: (Long) -> Unit,
     onCreateWorkout: () -> Unit,
+    onOpenProgress: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: WorkoutHomeViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
@@ -88,6 +91,16 @@ fun WorkoutHomeScreen(
                     Icon(imageVector = Icons.Filled.Add, contentDescription = null)
                     Text(text = "Iniciar treino", modifier = Modifier.padding(start = 8.dp))
                 }
+            }
+        }
+
+        item {
+            OutlinedButton(
+                onClick = onOpenProgress,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Icon(imageVector = Icons.AutoMirrored.Filled.ShowChart, contentDescription = null)
+                Text(text = "Progresso por exercício", modifier = Modifier.padding(start = 8.dp))
             }
         }
 

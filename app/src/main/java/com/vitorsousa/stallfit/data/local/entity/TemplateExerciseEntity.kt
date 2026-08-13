@@ -4,7 +4,9 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import kotlinx.serialization.Serializable
 
+@Serializable
 @Entity(
     tableName = "template_exercises",
     foreignKeys = [
@@ -32,5 +34,6 @@ data class TemplateExerciseEntity(
     val repRangeMin: Int,
     val repRangeMax: Int,
     val restSeconds: Int,
-    val intensity: Intensity
+    val intensity: Intensity,
+    val referenceWeightKg: Double? = null
 )

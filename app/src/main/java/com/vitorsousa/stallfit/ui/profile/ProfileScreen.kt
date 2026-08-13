@@ -1,5 +1,8 @@
 package com.vitorsousa.stallfit.ui.profile
 
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,6 +21,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -42,15 +47,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vitorsousa.stallfit.data.backup.BackupEnvelope
+import com.vitorsousa.stallfit.data.backup.BackupModule
+import com.vitorsousa.stallfit.data.backup.backupFileName
 import com.vitorsousa.stallfit.data.local.entity.ActivityLevel
 import com.vitorsousa.stallfit.data.local.entity.BiologicalSex
 import com.vitorsousa.stallfit.data.local.entity.BodyMeasurementEntity
@@ -58,12 +69,17 @@ import com.vitorsousa.stallfit.data.local.entity.NutritionGoal
 import com.vitorsousa.stallfit.di.AppViewModelProvider
 import com.vitorsousa.stallfit.ui.components.AppCard
 import com.vitorsousa.stallfit.ui.components.EmptyState
+import com.vitorsousa.stallfit.ui.components.LineChart
+import com.vitorsousa.stallfit.ui.components.LineChartPoint
 import com.vitorsousa.stallfit.ui.components.StatCard
 import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 private fun decimal(value: String) = value.replace(',', '.').toDoubleOrNull()
 
@@ -82,6 +98,73 @@ fun ProfileScreen(
     viewModel: ProfileViewModel = viewModel(factory = AppViewModelProvider.Factory)
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var showExportDialog by remember { mutableStateOf(false) }
+    var pendingExportModules by remember { mutableStateOf(setOf<BackupModule>()) }
+
+    val exportLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json")
+    ) { uri ->
+        if (uri != null) {
+            viewModel.exportBackup(pendingExportModules) { result ->
+                result.onSuccess { jsonString ->
+                    coroutineScope.launch {
+                        val writeResult = runCatching {
+                            withContext(Dispatchers.IO) {
+                                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                                    stream.write(jsonString.toByteArray())
+                                } != null
+                            }
+                        }
+                        writeResult.onSuccess { wrote ->
+                            if (wrote) {
+                                Toast.makeText(context, "Backup exportado com sucesso.", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "Falha ao exportar backup: não foi possível abrir o arquivo.", Toast.LENGTH_LONG).show()
+                            }
+                        }.onFailure { error ->
+                            Toast.makeText(context, "Falha ao exportar backup: ${error.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                }.onFailure { error ->
+                    Toast.makeText(context, "Falha ao exportar backup: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
+
+    var pendingImportEnvelope by remember { mutableStateOf<BackupEnvelope?>(null) }
+
+    val importLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            coroutineScope.launch {
+                val readResult = runCatching {
+                    withContext(Dispatchers.IO) {
+                        context.contentResolver.openInputStream(uri)?.bufferedReader()?.use { reader -> reader.readText() }
+                    }
+                }
+                readResult.onSuccess { jsonString ->
+                    if (jsonString != null) {
+                        viewModel.inspectBackup(jsonString) { result ->
+                            result.onSuccess { envelope ->
+                                pendingImportEnvelope = envelope
+                            }.onFailure { error ->
+                                Toast.makeText(context, "Arquivo de backup inválido: ${error.message}", Toast.LENGTH_LONG).show()
+                            }
+                        }
+                    } else {
+                        Toast.makeText(context, "Falha ao importar backup: não foi possível ler o arquivo.", Toast.LENGTH_LONG).show()
+                    }
+                }.onFailure { error ->
+                    Toast.makeText(context, "Falha ao importar backup: ${error.message}", Toast.LENGTH_LONG).show()
+                }
+            }
+        }
+    }
 
     var nameInput by rememberSaveable { mutableStateOf("") }
     var ageInput by rememberSaveable { mutableStateOf("") }
@@ -198,6 +281,27 @@ fun ProfileScreen(
         if (uiState.measurementHistory.isEmpty()) {
             EmptyState(message = "Nenhuma avaliação registrada ainda. Adicione a primeira para começar a acompanhar sua evolução.")
         } else {
+            if (uiState.measurementHistory.size >= 2) {
+                AppCard(modifier = Modifier.fillMaxWidth()) {
+                    Column(modifier = Modifier.padding(16.dp)) {
+                        Text(
+                            text = "Evolução do peso",
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        LineChart(
+                            points = uiState.measurementHistory.reversed().map { measurement ->
+                                LineChartPoint(
+                                    value = measurement.weightKg.toFloat(),
+                                    label = formatDate(measurement.createdAt).substring(0, 5)
+                                )
+                            },
+                            valueFormatter = { value -> "${formatNumber(value.toDouble())} kg" },
+                            modifier = Modifier.padding(top = 12.dp)
+                        )
+                    }
+                }
+            }
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 uiState.measurementHistory.forEach { measurement ->
                     MeasurementHistoryCard(
@@ -284,6 +388,35 @@ fun ProfileScreen(
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
+
+        Text(
+            text = "Backup e Restauração",
+            style = MaterialTheme.typography.titleLarge,
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        Text(
+            text = "Escolha quais categorias exportar ou restaurar — tudo de uma vez ou por partes — em um arquivo .json.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { showExportDialog = true },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(imageVector = Icons.Filled.Download, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Exportar")
+            }
+            Button(
+                onClick = { importLauncher.launch(arrayOf("application/json")) },
+                modifier = Modifier.weight(1f)
+            ) {
+                Icon(imageVector = Icons.Filled.Upload, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Importar")
+            }
+        }
     }
 
     if (showMeasurementDialog) {
@@ -304,6 +437,35 @@ fun ProfileScreen(
             onDelete = {
                 viewModel.deleteMeasurement(selectedMeasurement) {
                     selectedMeasurementId = null
+                }
+            }
+        )
+    }
+
+    if (showExportDialog) {
+        ExportBackupDialog(
+            onDismiss = { showExportDialog = false },
+            onConfirm = { modules ->
+                pendingExportModules = modules
+                showExportDialog = false
+                exportLauncher.launch(backupFileName(modules))
+            }
+        )
+    }
+
+    val envelopeToImport = pendingImportEnvelope
+    if (envelopeToImport != null) {
+        ImportBackupDialog(
+            envelope = envelopeToImport,
+            onDismiss = { pendingImportEnvelope = null },
+            onConfirm = { selectedModules, strategy ->
+                pendingImportEnvelope = null
+                viewModel.importBackup(envelopeToImport, selectedModules, strategy) { result ->
+                    result.onSuccess {
+                        Toast.makeText(context, "Backup restaurado com sucesso.", Toast.LENGTH_SHORT).show()
+                    }.onFailure { error ->
+                        Toast.makeText(context, "Falha ao importar backup: ${error.message}", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         )
