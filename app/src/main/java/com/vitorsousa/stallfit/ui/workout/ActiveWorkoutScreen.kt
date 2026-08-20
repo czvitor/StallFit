@@ -1,5 +1,8 @@
 package com.vitorsousa.stallfit.ui.workout
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -35,16 +38,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.vitorsousa.stallfit.data.repository.HealthConnectAvailability
 import com.vitorsousa.stallfit.di.AppViewModelProvider
 import com.vitorsousa.stallfit.ui.components.EmptyState
+import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,11 +69,23 @@ fun ActiveWorkoutScreen(
     val selectedExerciseId by viewModel.selectedExerciseId.collectAsState()
     val lastSet by viewModel.lastSetForSelected.collectAsState()
     val bestSet by viewModel.bestSetForSelected.collectAsState()
+    val healthSyncState by viewModel.healthSyncState.collectAsState()
 
     var exerciseMenuExpanded by rememberSaveable { mutableStateOf(false) }
     var showAddExerciseDialog by rememberSaveable { mutableStateOf(false) }
+    var showHealthConnectNotInstalledDialog by rememberSaveable { mutableStateOf(false) }
     var repsInput by rememberSaveable { mutableStateOf("") }
     var weightInput by rememberSaveable { mutableStateOf("") }
+
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val healthConnectPermissionLauncher = rememberLauncherForActivityResult(
+        contract = viewModel.healthConnectPermissionsContract
+    ) { granted ->
+        if (granted.containsAll(viewModel.healthConnectPermissions)) {
+            viewModel.syncToHealthConnect()
+        }
+    }
 
     val selectedExercise = exercises.firstOrNull { it.id == selectedExerciseId }
 
@@ -256,6 +278,27 @@ fun ActiveWorkoutScreen(
                     }
                 }
             }
+
+            if (uiState.isFinished) {
+                item {
+                    HealthConnectSyncCard(
+                        syncedAt = uiState.session?.healthConnectSyncedAt,
+                        syncState = healthSyncState,
+                        onSyncClick = {
+                            when (viewModel.healthConnectAvailability()) {
+                                HealthConnectAvailability.NOT_INSTALLED -> showHealthConnectNotInstalledDialog = true
+                                HealthConnectAvailability.AVAILABLE -> scope.launch {
+                                    if (viewModel.hasHealthConnectPermissions()) {
+                                        viewModel.syncToHealthConnect()
+                                    } else {
+                                        healthConnectPermissionLauncher.launch(viewModel.healthConnectPermissions)
+                                    }
+                                }
+                            }
+                        }
+                    )
+                }
+            }
         }
     }
 
@@ -268,7 +311,84 @@ fun ActiveWorkoutScreen(
             }
         )
     }
+
+    if (showHealthConnectNotInstalledDialog) {
+        AlertDialog(
+            onDismissRequest = { showHealthConnectNotInstalledDialog = false },
+            title = { Text("Health Connect não encontrado") },
+            text = { Text("Para sincronizar este treino, instale o app Health Connect.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    showHealthConnectNotInstalledDialog = false
+                    context.startActivity(
+                        Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=com.google.android.apps.healthdata"))
+                    )
+                }) {
+                    Text("Instalar")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showHealthConnectNotInstalledDialog = false }) { Text("Cancelar") }
+            }
+        )
+    }
 }
+
+@Composable
+private fun HealthConnectSyncCard(
+    syncedAt: Long?,
+    syncState: HealthSyncState,
+    onSyncClick: () -> Unit
+) {
+    Card(colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(18.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(
+                text = "Health Connect",
+                style = MaterialTheme.typography.titleMedium,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = if (syncedAt != null) {
+                    "Sincronizado em ${formatSyncedAt(syncedAt)}"
+                } else {
+                    "Este treino ainda não foi sincronizado."
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (syncState is HealthSyncState.Error) {
+                Text(
+                    text = "Não foi possível sincronizar. Tente novamente.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+            OutlinedButton(
+                onClick = onSyncClick,
+                enabled = syncState != HealthSyncState.Syncing,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(
+                    text = when {
+                        syncState == HealthSyncState.Syncing -> "Sincronizando..."
+                        syncedAt != null -> "Sincronizar novamente"
+                        else -> "Sincronizar com Health Connect"
+                    }
+                )
+            }
+        }
+    }
+}
+
+private fun formatSyncedAt(epochMillis: Long): String =
+    Instant.ofEpochMilli(epochMillis)
+        .atZone(ZoneId.systemDefault())
+        .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
 
 @Composable
 private fun SetEntryRow(

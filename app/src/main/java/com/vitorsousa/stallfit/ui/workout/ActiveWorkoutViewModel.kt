@@ -6,6 +6,8 @@ import androidx.lifecycle.viewModelScope
 import com.vitorsousa.stallfit.data.local.entity.ExerciseEntity
 import com.vitorsousa.stallfit.data.local.entity.SetEntryEntity
 import com.vitorsousa.stallfit.data.local.entity.bestSet
+import com.vitorsousa.stallfit.data.repository.HealthConnectAvailability
+import com.vitorsousa.stallfit.data.repository.HealthConnectRepository
 import com.vitorsousa.stallfit.data.repository.WorkoutRepository
 import com.vitorsousa.stallfit.navigation.Destination
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,10 +22,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
+/** Outcome of a Health Connect sync attempt for the current session, driving the UI's button/message state. */
+sealed interface HealthSyncState {
+    data object Idle : HealthSyncState
+    data object Syncing : HealthSyncState
+    data object Success : HealthSyncState
+    data object Error : HealthSyncState
+}
+
 @OptIn(ExperimentalCoroutinesApi::class)
 class ActiveWorkoutViewModel(
     savedStateHandle: SavedStateHandle,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val healthConnectRepository: HealthConnectRepository
 ) : ViewModel() {
 
     private val sessionId: Long = checkNotNull(savedStateHandle[Destination.WorkoutSession.ARG_SESSION_ID])
@@ -94,5 +105,36 @@ class ActiveWorkoutViewModel(
 
     fun discardSession() {
         viewModelScope.launch { workoutRepository.discardSession(sessionId) }
+    }
+
+    val healthConnectPermissions: Set<String> = healthConnectRepository.requiredPermissions
+    val healthConnectPermissionsContract by lazy { healthConnectRepository.requestPermissionsContract() }
+
+    /** Synchronous pre-flight check so the UI can decide, before syncing, whether to prompt for install or permission. */
+    fun healthConnectAvailability(): HealthConnectAvailability = healthConnectRepository.availability()
+
+    suspend fun hasHealthConnectPermissions(): Boolean = healthConnectRepository.hasPermissions()
+
+    private val _healthSyncState = MutableStateFlow<HealthSyncState>(HealthSyncState.Idle)
+    val healthSyncState: StateFlow<HealthSyncState> = _healthSyncState.asStateFlow()
+
+    /** Assumes Health Connect is installed and write permission is already granted — the UI checks both first. */
+    fun syncToHealthConnect() {
+        val session = uiState.value.session ?: return
+        viewModelScope.launch {
+            _healthSyncState.value = HealthSyncState.Syncing
+            val result = healthConnectRepository.writeWorkoutSession(session)
+            _healthSyncState.value = result.fold(
+                onSuccess = {
+                    workoutRepository.markHealthConnectSynced(session, System.currentTimeMillis())
+                    HealthSyncState.Success
+                },
+                onFailure = { HealthSyncState.Error }
+            )
+        }
+    }
+
+    fun dismissHealthSyncMessage() {
+        _healthSyncState.value = HealthSyncState.Idle
     }
 }

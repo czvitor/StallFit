@@ -45,4 +45,10 @@ object DateUtils {
         java.time.Instant.ofEpochMilli(epochMillis)
             .atZone(zone)
             .format(DateTimeFormatter.ofPattern("HH:mm"))
+
+    /** Default name for a freshly-started session with no template, e.g. "Quarta-feira, 19/08". */
+    fun todaySessionLabel(): String =
+        LocalDate.now()
+            .format(DateTimeFormatter.ofPattern("EEEE, dd/MM", Locale("pt", "BR")))
+            .replaceFirstChar { it.uppercase() }
 }

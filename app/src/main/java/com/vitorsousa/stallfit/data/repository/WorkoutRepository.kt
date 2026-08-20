@@ -44,12 +44,22 @@ class WorkoutRepository(
     suspend fun startSession(name: String): Long =
         sessionDao.insert(WorkoutSessionEntity(name = name, startedAt = System.currentTimeMillis()))
 
-    suspend fun finishSession(session: WorkoutSessionEntity) {
-        sessionDao.update(session.copy(finishedAt = System.currentTimeMillis()))
+    suspend fun finishSession(session: WorkoutSessionEntity, avgHeartRateBpm: Double? = null, totalCalories: Double? = null) {
+        sessionDao.update(
+            session.copy(
+                finishedAt = System.currentTimeMillis(),
+                avgHeartRateBpm = avgHeartRateBpm,
+                totalCalories = totalCalories
+            )
+        )
     }
 
     suspend fun discardSession(sessionId: Long) {
         sessionDao.delete(sessionId)
+    }
+
+    suspend fun markHealthConnectSynced(session: WorkoutSessionEntity, syncedAt: Long) {
+        sessionDao.update(session.copy(healthConnectSyncedAt = syncedAt))
     }
 
     suspend fun logSet(sessionId: Long, exerciseId: Long, setNumber: Int, reps: Int, weightKg: Double) {

@@ -2,6 +2,14 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <uses-permission android:name="android.permission.VIBRATE" />
+    <uses-permission android:name="android.permission.health.WRITE_EXERCISE" />
+    <uses-permission android:name="android.permission.health.WRITE_HEART_RATE" />
+    <uses-permission android:name="android.permission.health.WRITE_TOTAL_CALORIES_BURNED" />
+
+    <!-- Needed on Android 11+ to check whether Health Connect is installed before writing to it. -->
+    <queries>
+        <package android:name="com.google.android.apps.healthdata" />
+    </queries>
 
     <application
         android:name=".StallFitApp"
@@ -23,7 +31,27 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <!-- Lets Health Connect's permission screen deep-link back into the app to explain
+                 why WRITE_EXERCISE is requested; required for the permission dialog to work
+                 correctly, opens the app itself rather than a dedicated screen. -->
+            <intent-filter>
+                <action android:name="androidx.health.ACTION_SHOW_PERMISSIONS_RATIONALE" />
+            </intent-filter>
         </activity>
+
+        <!-- Receives requests from the :wear companion app (see data/wear/) and replies with
+             the result of the corresponding WorkoutRepository/WorkoutTemplateRepository call. -->
+        <service
+            android:name=".data.wear.StallFitWearableListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.MESSAGE_RECEIVED" />
+                <data
+                    android:scheme="wear"
+                    android:host="*"
+                    android:pathPrefix="/stallfit" />
+            </intent-filter>
+        </service>
     </application>
 
 </manifest>

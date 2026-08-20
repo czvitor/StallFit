@@ -1,5 +1,5 @@
 [versions]
-agp = "8.4.2"
+agp = "8.13.2"
 kotlin = "1.9.24"
 ksp = "1.9.24-1.0.20"
 coreKtx = "1.13.1"
@@ -9,11 +9,18 @@ composeBom = "2024.06.00"
 composeCompiler = "1.5.14"
 navigationCompose = "2.7.7"
 room = "2.6.1"
+healthConnect = "1.1.0"
 datastorePreferences = "1.1.1"
 kotlinxSerializationJson = "1.6.3"
 junit = "4.13.2"
 androidxTestExtJunit = "1.2.1"
 androidxTestRunner = "1.6.1"
+playServicesWearable = "20.0.1"
+kotlinxCoroutinesPlayServices = "1.8.1"
+wearComposeMaterial3 = "1.5.0"
+wearComposeFoundation = "1.5.0"
+healthServicesClient = "1.0.0"
+kotlinxCoroutinesGuava = "1.8.1"
 
 [libraries]
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
@@ -34,10 +41,18 @@ androidx-room-runtime = { group = "androidx.room", name = "room-runtime", versio
 androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
 androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
 androidx-room-testing = { group = "androidx.room", name = "room-testing", version.ref = "room" }
+androidx-health-connect-client = { group = "androidx.health.connect", name = "connect-client", version.ref = "healthConnect" }
 androidx-datastore-preferences = { group = "androidx.datastore", name = "datastore-preferences", version.ref = "datastorePreferences" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-test-ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "androidxTestExtJunit" }
 androidx-test-runner = { group = "androidx.test", name = "runner", version.ref = "androidxTestRunner" }
+play-services-wearable = { group = "com.google.android.gms", name = "play-services-wearable", version.ref = "playServicesWearable" }
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "kotlinxCoroutinesPlayServices" }
+androidx-wear-compose-material3 = { group = "androidx.wear.compose", name = "compose-material3", version.ref = "wearComposeMaterial3" }
+androidx-wear-compose-foundation = { group = "androidx.wear.compose", name = "compose-foundation", version.ref = "wearComposeFoundation" }
+androidx-health-services-client = { group = "androidx.health", name = "health-services-client", version.ref = "healthServicesClient" }
+kotlinx-coroutines-guava = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-guava", version.ref = "kotlinxCoroutinesGuava" }
+androidx-lifecycle-service = { group = "androidx.lifecycle", name = "lifecycle-service", version.ref = "lifecycle" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

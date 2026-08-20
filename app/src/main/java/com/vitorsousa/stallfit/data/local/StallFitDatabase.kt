@@ -65,7 +65,7 @@ abstract class StallFitDatabase : RoomDatabase() {
 
     companion object {
         /** Single source of truth for the schema version, also read by [com.vitorsousa.stallfit.data.repository.BackupRepository] to reject backups from a stale schema. */
-        const val SCHEMA_VERSION = 4
+        const val SCHEMA_VERSION = 6
 
         @Volatile
         private var INSTANCE: StallFitDatabase? = null
@@ -78,7 +78,7 @@ abstract class StallFitDatabase : RoomDatabase() {
                     "stallfit.db"
                 )
                     .addCallback(seedCallback)
-                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     // Destructive fallback only covers a downgrade (installing an older APK over a
                     // newer database, which has no valid migration path back). Every forward schema
                     // bump must ship a real Migration in Migrations.kt — real user data is at stake.

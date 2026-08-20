@@ -58,7 +58,8 @@ object AppViewModelProvider {
         initializer {
             ActiveWorkoutViewModel(
                 savedStateHandle = createSavedStateHandle(),
-                workoutRepository = stallFitContainer().workoutRepository
+                workoutRepository = stallFitContainer().workoutRepository,
+                healthConnectRepository = stallFitContainer().healthConnectRepository
             )
         }
         initializer {

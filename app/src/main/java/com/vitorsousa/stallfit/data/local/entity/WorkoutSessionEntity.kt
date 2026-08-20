@@ -24,5 +24,8 @@ data class WorkoutSessionEntity(
     val name: String,
     val startedAt: Long,
     val finishedAt: Long? = null,
-    val templateId: Long? = null
+    val templateId: Long? = null,
+    val healthConnectSyncedAt: Long? = null,
+    val avgHeartRateBpm: Double? = null,
+    val totalCalories: Double? = null
 )

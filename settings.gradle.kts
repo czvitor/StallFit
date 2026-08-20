@@ -18,3 +18,4 @@ dependencyResolutionManagement {
 // the user-facing app name ("StällFit") is set in app/src/main/res/values/strings.xml
 rootProject.name = "StallFit"
 include(":app")
+include(":wear")

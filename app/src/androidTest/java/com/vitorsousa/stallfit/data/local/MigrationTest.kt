@@ -114,9 +114,43 @@ class MigrationTest {
     }
 
     @Test
-    fun migrateAll_1To4_runsCleanOnAnEmptyDatabase() {
+    fun migrate4To5_addsHealthConnectSyncColumnAsNullable() {
+        helper.createDatabase(dbName, 4).apply {
+            execSQL("INSERT INTO workout_sessions (id, name, startedAt, finishedAt) VALUES (1, 'Treino A', 1000, 2000)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(dbName, 5, true, MIGRATION_4_5)
+
+        db.query("SELECT healthConnectSyncedAt FROM workout_sessions WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+        }
+    }
+
+    @Test
+    fun migrate5To6_addsHeartRateAndCaloriesColumnsAsNullable() {
+        helper.createDatabase(dbName, 5).apply {
+            execSQL("INSERT INTO workout_sessions (id, name, startedAt, finishedAt) VALUES (1, 'Treino A', 1000, 2000)")
+            close()
+        }
+
+        val db = helper.runMigrationsAndValidate(dbName, 6, true, MIGRATION_5_6)
+
+        db.query("SELECT avgHeartRateBpm, totalCalories FROM workout_sessions WHERE id = 1").use { cursor ->
+            assertTrue(cursor.moveToFirst())
+            assertTrue(cursor.isNull(0))
+            assertTrue(cursor.isNull(1))
+        }
+    }
+
+    @Test
+    fun migrateAll_1To6_runsCleanOnAnEmptyDatabase() {
         helper.createDatabase(dbName, 1).apply { close() }
 
-        helper.runMigrationsAndValidate(dbName, 4, true, MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+        helper.runMigrationsAndValidate(
+            dbName, 6, true,
+            MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6
+        )
     }
 }

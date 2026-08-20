@@ -254,3 +254,20 @@ val MIGRATION_3_4 = object : Migration(3, 4) {
         db.execSQL("ALTER TABLE workout_templates ADD COLUMN notes TEXT")
     }
 }
+
+// Nullable column, no foreign key, plain ADD COLUMN. Tracks when a session was last pushed to
+// Health Connect (null = never synced) — used both for idempotency and for the sync button's label.
+val MIGRATION_4_5 = object : Migration(4, 5) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE workout_sessions ADD COLUMN healthConnectSyncedAt INTEGER")
+    }
+}
+
+// Nullable columns, no foreign key, plain ADD COLUMN. Sensor summary (Fase 3) from a paired
+// watch's ExerciseClient session — null when the session had no watch/sensor involved.
+val MIGRATION_5_6 = object : Migration(5, 6) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE workout_sessions ADD COLUMN avgHeartRateBpm REAL")
+        db.execSQL("ALTER TABLE workout_sessions ADD COLUMN totalCalories REAL")
+    }
+}

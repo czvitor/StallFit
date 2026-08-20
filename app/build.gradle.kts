@@ -7,12 +7,12 @@ plugins {
 
 android {
     namespace = "com.vitorsousa.stallfit"
-    compileSdk = 34
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.vitorsousa.stallfit"
         minSdk = 26
-        targetSdk = 34
+        targetSdk = 36
         versionCode = 1
         versionName = "1.0.0"
 
@@ -91,6 +91,8 @@ dependencies {
     ksp(libs.androidx.room.compiler)
 
     implementation(libs.androidx.datastore.preferences)
+    implementation(libs.androidx.health.connect.client)
+    implementation(libs.play.services.wearable)
 
     implementation(libs.kotlinx.serialization.json)
 

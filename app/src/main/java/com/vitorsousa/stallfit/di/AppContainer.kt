@@ -4,9 +4,11 @@ import android.content.Context
 import com.vitorsousa.stallfit.data.local.StallFitDatabase
 import com.vitorsousa.stallfit.data.local.ThemePreferences
 import com.vitorsousa.stallfit.data.repository.BackupRepository
+import com.vitorsousa.stallfit.data.repository.HealthConnectRepository
 import com.vitorsousa.stallfit.data.repository.NutritionRepository
 import com.vitorsousa.stallfit.data.repository.ProfileRepository
 import com.vitorsousa.stallfit.data.repository.ThemeRepository
+import com.vitorsousa.stallfit.data.repository.WearRepository
 import com.vitorsousa.stallfit.data.repository.WorkoutRepository
 import com.vitorsousa.stallfit.data.repository.WorkoutTemplateRepository
 
@@ -54,5 +56,13 @@ class AppContainer(context: Context) {
 
     val backupRepository: BackupRepository by lazy {
         BackupRepository(backupDao = database.backupDao())
+    }
+
+    val healthConnectRepository: HealthConnectRepository by lazy {
+        HealthConnectRepository(context.applicationContext)
+    }
+
+    val wearRepository: WearRepository by lazy {
+        WearRepository(workoutRepository, workoutTemplateRepository)
     }
 }
