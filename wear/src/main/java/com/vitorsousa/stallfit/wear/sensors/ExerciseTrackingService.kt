@@ -59,6 +59,12 @@ class ExerciseTrackingService : LifecycleService() {
     private val _metrics = MutableStateFlow<ExerciseMetrics?>(null)
     val metrics: StateFlow<ExerciseMetrics?> = _metrics.asStateFlow()
 
+    // Ongoing Activity indicator state: the stopwatch zero-point must stay fixed across updates —
+    // recomputing it per update would visibly reset the elapsed time shown on the watch face.
+    private var ongoingActivity: OngoingActivity? = null
+    private var trackingStartElapsedMillis: Long = 0L
+    private var lastDisplayedHeartRateBpm: Int? = null
+
     private val binder = LocalBinder()
 
     inner class LocalBinder : Binder() {
@@ -115,7 +121,11 @@ class ExerciseTrackingService : LifecycleService() {
             }
 
             exerciseUpdateFlow()
-                .onEach { update -> _metrics.value = update.toMetrics() }
+                .onEach { update ->
+                    val newMetrics = update.toMetrics()
+                    _metrics.value = newMetrics
+                    updateHeartRateStatus(newMetrics.liveHeartRateBpm)
+                }
                 .launchIn(lifecycleScope)
 
             exerciseClient.startExerciseAsync(
@@ -207,9 +217,10 @@ class ExerciseTrackingService : LifecycleService() {
     }
 
     /**
-     * Wear OS Ongoing Activity indicator: watch-face icon + elapsed-time stopwatch that, on tap,
-     * brings the existing [MainActivity] instance forward (FLAG_ACTIVITY_SINGLE_TOP) instead of
-     * recreating it, so [com.vitorsousa.stallfit.wear.ui.WearScreen.ActiveSession] state survives.
+     * Wear OS Ongoing Activity indicator: watch-face icon + elapsed-time stopwatch + live heart
+     * rate that, on tap, brings the existing [MainActivity] instance forward
+     * (FLAG_ACTIVITY_SINGLE_TOP) instead of recreating it, so
+     * [com.vitorsousa.stallfit.wear.ui.WearScreen.ActiveSession] state survives.
      */
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun attachOngoingActivity(notificationBuilder: NotificationCompat.Builder) {
@@ -221,17 +232,45 @@ class ExerciseTrackingService : LifecycleService() {
         )
         notificationBuilder.setContentIntent(touchIntent)
 
-        val status = Status.Builder()
-            .addTemplate("#time#")
-            .addPart("time", Status.StopwatchPart(SystemClock.elapsedRealtime()))
-            .build()
+        trackingStartElapsedMillis = SystemClock.elapsedRealtime()
+        lastDisplayedHeartRateBpm = null
 
-        OngoingActivity.Builder(applicationContext, NOTIFICATION_ID, notificationBuilder)
+        ongoingActivity = OngoingActivity.Builder(applicationContext, NOTIFICATION_ID, notificationBuilder)
             .setStaticIcon(R.drawable.ic_notification_pulse)
             .setTouchIntent(touchIntent)
-            .setStatus(status)
+            .setStatus(heartRateStatus(bpm = null))
             .build()
-            .apply(applicationContext)
+            .also { it.apply(applicationContext) }
+    }
+
+    /**
+     * Rebuilds the indicator's [Status] around the fixed [trackingStartElapsedMillis] zero-point,
+     * so only the heart-rate text changes between calls — the stopwatch itself never visibly resets.
+     */
+    private fun heartRateStatus(bpm: Int?): Status =
+        Status.Builder()
+            .addTemplate("#time# · #hr#")
+            .addPart("time", Status.StopwatchPart(trackingStartElapsedMillis))
+            .addPart("hr", Status.TextPart(bpm?.let { "$it bpm" } ?: "-- bpm"))
+            .build()
+
+    /**
+     * Best-effort, throttled to actual value changes: [ExerciseUpdate]s can arrive roughly once a
+     * second, and re-posting the notification on every one would be wasteful. No-ops if the
+     * indicator was never attached (e.g. permission denied at [attachOngoingActivity] time).
+     */
+    private fun updateHeartRateStatus(bpm: Int?) {
+        if (bpm == lastDisplayedHeartRateBpm) return
+        lastDisplayedHeartRateBpm = bpm
+        val activity = ongoingActivity ?: return
+
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+            ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+                PackageManager.PERMISSION_GRANTED
+        ) {
+            runCatching { activity.update(applicationContext, heartRateStatus(bpm)) }
+                .onFailure { e -> Log.w(TAG, "Ongoing Activity heart-rate update failed, notification proceeds unaffected", e) }
+        }
     }
 
     companion object {
