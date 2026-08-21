@@ -6,5 +6,4 @@
     <string name="workout_complication_idle_description">Nenhum treino em andamento</string>
     <string name="workout_complication_active_description">Treino em andamento</string>
     <string name="workout_tile_label">Status do treino</string>
-    <string name="workout_tile_idle_action_label">Abrir StällFit</string>
 </resources>

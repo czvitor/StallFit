@@ -2,76 +2,76 @@ package com.vitorsousa.stallfit.wear.tile
 
 import android.content.ComponentName
 import android.content.Context
-import androidx.wear.protolayout.ResourceBuilders.Resources
+import androidx.wear.protolayout.ActionBuilders
 import androidx.wear.protolayout.TimelineBuilders.Timeline
-import androidx.wear.protolayout.material3.*
-import androidx.wear.tiles.RequestBuilders.ResourcesRequest
+import androidx.wear.protolayout.material3.MaterialScope
+import androidx.wear.protolayout.material3.primaryLayout
+import androidx.wear.protolayout.material3.text
+import androidx.wear.protolayout.modifiers.LayoutModifier
+import androidx.wear.protolayout.modifiers.clickable
+import androidx.wear.protolayout.modifiers.contentDescription
+import androidx.wear.protolayout.types.layoutString
+import androidx.wear.tiles.Material3TileService
 import androidx.wear.tiles.RequestBuilders.TileRequest
 import androidx.wear.tiles.TileBuilders.Tile
 import androidx.wear.tiles.TileService
-import com.google.common.util.concurrent.Futures
-import com.google.common.util.concurrent.ListenableFuture
+import androidx.wear.tiles.tile
 import com.vitorsousa.stallfit.wear.MainActivity
 import com.vitorsousa.stallfit.wear.R
 import com.vitorsousa.stallfit.wear.complication.WorkoutComplicationState
-import java.time.Duration
+import java.time.Duration as JavaDuration
 import java.time.Instant
+import kotlin.time.Duration.Companion.seconds
 
 /**
  * Tile showing whether a StällFit workout is currently being tracked — reuses the same
  * cross-process-safe [WorkoutComplicationState] the watch-face complication already reads from.
  * Unlike the complication, the tile has no self-updating stopwatch text (Tiles have no
  * TimeDifferenceComplicationText equivalent), so elapsed time is a snapshot recomputed on every
- * onTileRequest, refreshed periodically via setFreshnessIntervalMillis while tracking is active.
+ * tileResponse, refreshed periodically via the tile's freshness interval while tracking is active.
  */
-class WorkoutTileService : TileService() {
+class WorkoutTileService : Material3TileService() {
 
-    override fun onTileRequest(requestParams: TileRequest): ListenableFuture<Tile> {
-        val snapshot = WorkoutComplicationState(this).read()
+    override suspend fun MaterialScope.tileResponse(requestParams: TileRequest): Tile {
+        val snapshot = WorkoutComplicationState(context).read()
 
-        val layout = materialScope(this, requestParams.deviceConfiguration) {
-            primaryLayout(
-                titleSlot = {
-                    text(
-                        if (snapshot.isTracking && snapshot.startInstant != null) {
-                            formatElapsed(Duration.between(snapshot.startInstant, Instant.now())).layoutString
-                        } else {
-                            getString(R.string.workout_complication_idle_text).layoutString
-                        }
-                    )
-                },
-                mainSlot = {
-                    text(
-                        if (snapshot.isTracking) {
-                            (snapshot.lastHeartRateBpm?.let { "$it bpm" } ?: "-- bpm").layoutString
-                        } else {
-                            getString(R.string.workout_complication_idle_description).layoutString
-                        }
-                    )
-                },
-                bottomSlot = {
-                    textEdgeButton(
-                        onClick = clickable(action = launchAction(ComponentName(this@WorkoutTileService, MainActivity::class.java))),
-                        labelContent = { text(getString(R.string.workout_tile_idle_action_label).layoutString) }
-                    )
-                }
-            )
+        val titleText = if (snapshot.isTracking && snapshot.startInstant != null) {
+            formatElapsed(JavaDuration.between(snapshot.startInstant, Instant.now()))
+        } else {
+            context.getString(R.string.workout_complication_idle_text)
+        }
+        val mainText = if (snapshot.isTracking) {
+            snapshot.lastHeartRateBpm?.let { "$it bpm" } ?: "-- bpm"
+        } else {
+            context.getString(R.string.workout_complication_idle_description)
+        }
+        val descriptionRes = if (snapshot.isTracking) {
+            R.string.workout_complication_active_description
+        } else {
+            R.string.workout_complication_idle_description
         }
 
-        val tileBuilder = Tile.Builder()
-            .setResourcesVersion(RESOURCES_VERSION)
-            .setTileTimeline(Timeline.fromLayoutElement(layout))
-        if (snapshot.isTracking) {
-            tileBuilder.setFreshnessIntervalMillis(FRESHNESS_INTERVAL_MILLIS)
-        }
-        return Futures.immediateFuture(tileBuilder.build())
+        val layout = primaryLayout(
+            titleSlot = { text(titleText.layoutString) },
+            mainSlot = {
+                text(
+                    text = mainText.layoutString,
+                    modifier = LayoutModifier.contentDescription(context.getString(descriptionRes)),
+                )
+            },
+            onClick = clickable(
+                action = ActionBuilders.launchAction(ComponentName(context, MainActivity::class.java))
+            ),
+        )
+
+        return tile(
+            timeline = Timeline.fromLayoutElement(layout),
+            freshness = if (snapshot.isTracking) FRESHNESS_INTERVAL else null,
+            resourcesVersion = RESOURCES_VERSION,
+        )
     }
 
-    override fun onTileResourcesRequest(requestParams: ResourcesRequest): ListenableFuture<Resources> {
-        return Futures.immediateFuture(Resources.Builder().setVersion(RESOURCES_VERSION).build())
-    }
-
-    private fun formatElapsed(duration: Duration): String {
+    private fun formatElapsed(duration: JavaDuration): String {
         val totalSeconds = duration.seconds.coerceAtLeast(0)
         val hours = totalSeconds / 3600
         val minutes = (totalSeconds % 3600) / 60
@@ -85,9 +85,9 @@ class WorkoutTileService : TileService() {
 
     companion object {
         private const val RESOURCES_VERSION = "1"
-        private const val FRESHNESS_INTERVAL_MILLIS = 30_000L
+        private val FRESHNESS_INTERVAL = 30.seconds
 
-        /** Fire-and-forget: asks the system to re-invoke WorkoutTileService.onTileRequest. */
+        /** Fire-and-forget: asks the system to re-invoke WorkoutTileService.tileResponse. */
         fun requestTileUpdate(context: Context) {
             runCatching {
                 TileService.getUpdater(context).requestUpdate(WorkoutTileService::class.java)

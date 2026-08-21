@@ -1,12 +1,11 @@
 [versions]
 agp = "8.13.2"
-kotlin = "1.9.24"
-ksp = "1.9.24-1.0.20"
+kotlin = "2.1.20"
+ksp = "2.1.20-1.0.32"
 coreKtx = "1.13.1"
 lifecycle = "2.8.4"
 activityCompose = "1.9.1"
 composeBom = "2024.06.00"
-composeCompiler = "1.5.14"
 navigationCompose = "2.7.7"
 room = "2.6.1"
 healthConnect = "1.1.0"
@@ -68,4 +67,5 @@ androidx-wear-protolayout-material3 = { group = "androidx.wear.protolayout", nam
 android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
