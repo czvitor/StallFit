@@ -32,6 +32,7 @@ import androidx.wear.ongoing.Status
 import com.vitorsousa.stallfit.wear.MainActivity
 import com.vitorsousa.stallfit.wear.R
 import com.vitorsousa.stallfit.wear.complication.WorkoutComplicationState
+import com.vitorsousa.stallfit.wear.tile.WorkoutTileService
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -96,6 +97,7 @@ class ExerciseTrackingService : LifecycleService() {
         )
         complicationState.markTrackingStarted()
         WorkoutComplicationState.requestComplicationUpdate(this)
+        WorkoutTileService.requestTileUpdate(this)
         lifecycleScope.launch { beginTracking() }
         return START_NOT_STICKY
     }
@@ -187,6 +189,7 @@ class ExerciseTrackingService : LifecycleService() {
         runCatching { exerciseClient.endExerciseAsync().await() }
         complicationState.markTrackingStopped()
         WorkoutComplicationState.requestComplicationUpdate(this)
+        WorkoutTileService.requestTileUpdate(this)
         stopSelfGracefully()
         return snapshot
     }
