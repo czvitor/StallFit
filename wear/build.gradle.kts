@@ -62,4 +62,5 @@ dependencies {
     implementation(libs.kotlinx.coroutines.guava)
     implementation(libs.androidx.lifecycle.service)
     implementation(libs.androidx.wear.ongoing)
+    implementation(libs.androidx.wear.watchface.complications.data.source.ktx)
 }

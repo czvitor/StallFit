@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">StällFit</string>
+    <string name="workout_complication_label">Status do treino</string>
+    <string name="workout_complication_idle_text">--:--</string>
+    <string name="workout_complication_idle_description">Nenhum treino em andamento</string>
+    <string name="workout_complication_active_description">Treino em andamento</string>
 </resources>

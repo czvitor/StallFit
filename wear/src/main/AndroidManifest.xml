@@ -40,6 +40,23 @@
             android:name=".sensors.ExerciseTrackingService"
             android:exported="false"
             android:foregroundServiceType="health" />
+
+        <service
+            android:name=".complication.WorkoutComplicationDataSourceService"
+            android:exported="true"
+            android:icon="@drawable/ic_notification_pulse"
+            android:label="@string/workout_complication_label"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="0" />
+        </service>
     </application>
 
 </manifest>

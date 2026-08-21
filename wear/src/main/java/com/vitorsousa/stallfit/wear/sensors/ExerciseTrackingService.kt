@@ -31,6 +31,7 @@ import androidx.wear.ongoing.OngoingActivity
 import androidx.wear.ongoing.Status
 import com.vitorsousa.stallfit.wear.MainActivity
 import com.vitorsousa.stallfit.wear.R
+import com.vitorsousa.stallfit.wear.complication.WorkoutComplicationState
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -65,6 +66,8 @@ class ExerciseTrackingService : LifecycleService() {
     private var trackingStartElapsedMillis: Long = 0L
     private var lastDisplayedHeartRateBpm: Int? = null
 
+    private val complicationState by lazy { WorkoutComplicationState(this) }
+
     private val binder = LocalBinder()
 
     inner class LocalBinder : Binder() {
@@ -91,6 +94,8 @@ class ExerciseTrackingService : LifecycleService() {
             buildNotification(),
             ServiceInfo.FOREGROUND_SERVICE_TYPE_HEALTH
         )
+        complicationState.markTrackingStarted()
+        WorkoutComplicationState.requestComplicationUpdate(this)
         lifecycleScope.launch { beginTracking() }
         return START_NOT_STICKY
     }
@@ -125,6 +130,7 @@ class ExerciseTrackingService : LifecycleService() {
                     val newMetrics = update.toMetrics()
                     _metrics.value = newMetrics
                     updateHeartRateStatus(newMetrics.liveHeartRateBpm)
+                    complicationState.updateHeartRate(newMetrics.liveHeartRateBpm)
                 }
                 .launchIn(lifecycleScope)
 
@@ -179,6 +185,8 @@ class ExerciseTrackingService : LifecycleService() {
     suspend fun stopTrackingAndSnapshot(): ExerciseMetrics? {
         val snapshot = _metrics.value
         runCatching { exerciseClient.endExerciseAsync().await() }
+        complicationState.markTrackingStopped()
+        WorkoutComplicationState.requestComplicationUpdate(this)
         stopSelfGracefully()
         return snapshot
     }
