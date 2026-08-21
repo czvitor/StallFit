@@ -18,6 +18,7 @@ fun heartRateSensorPermission(): String =
 /** Every runtime permission [com.vitorsousa.stallfit.wear.MainActivity] should request up front for sensor tracking to work. */
 fun sensorRuntimePermissions(): Array<String> = buildList {
     add(heartRateSensorPermission())
+    add(Manifest.permission.ACTIVITY_RECOGNITION)
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         add(Manifest.permission.POST_NOTIFICATIONS)
     }
